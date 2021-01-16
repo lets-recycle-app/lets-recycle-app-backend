@@ -1,0 +1,30 @@
+{
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "module"
+  },
+  "extends": [
+    "airbnb-base"
+  ],
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [
+          ".js"
+        ]
+      }
+    }
+  },
+  "rules": {
+    "no-console": "off",
+    "max-len": 0,
+    "import/extensions": [
+      "error",
+      "ignorePackages",
+      {
+        "js": "always"
+      }
+    ],
+    "linebreak-style": 0 
+  }
+}
