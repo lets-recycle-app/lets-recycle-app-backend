@@ -16,8 +16,8 @@ export const getSecretObject = (regionCode, secretName) => new Promise((resolve,
 });
 
 export const dbControl = () => {
-  let region = 'unknown';
-  let dbName = 'none';
+  let regionName = 'unknown';
+  let instanceName = 'none';
   let connectSecret = '';
   let db;
 
@@ -38,7 +38,7 @@ export const dbControl = () => {
   };
 
   const runSql = (sqlStatement) => {
-    (getSecretObject(region, dbName))
+    (getSecretObject(regionName, instanceName))
       .then((awsSecret) => { connectSecret = JSON.parse(awsSecret.toString()); })
       .then(() => { db = mysql.createConnection(connectSecret); })
       .then(() => { executeSQL(sqlStatement); })
@@ -48,8 +48,8 @@ export const dbControl = () => {
 
   return (
     {
-      setRegion: (value) => { region = value; },
-      setName: (value) => { dbName = value; },
+      setRegion: (value) => { regionName = value; },
+      setInstance: (value) => { instanceName = value; },
       runSql: (value) => runSql(value),
     }
   );
