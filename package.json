@@ -5,10 +5,11 @@
   "type": "module",
   "dependencies": {
     "mysql": "^2.18.1",
+    "node-fetch": "^2.6.1",
     "aws-sdk": "^2.828.0"
   },
   "scripts": {
-    "start": "node --no-warnings mysql/dbInit.js",
+    "start": "node --no-warnings mysql/dbSetup.js",
     "eslint": "eslint --fix ./"
   },
   "devDependencies": {
