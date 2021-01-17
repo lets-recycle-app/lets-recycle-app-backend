@@ -1,4 +1,4 @@
-# dbSetup.js
+# MySQL dbSetup.js
 
 To install/reinstall MySQL tables and static data for a database hosted on AWS.
 
