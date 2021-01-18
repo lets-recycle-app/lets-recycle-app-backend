@@ -62,3 +62,43 @@ values
 ('driver', 'Alice', 'Brown', 'aaa@aa.aa', 'loremipsum', '2021-01-15 11:12:48', NULL),
 ('driver', 'Bob', 'Newman', 'bbb@bb.bb', 'loremipsum', '2021-01-15 11:15:45', NULL);
 `;
+
+export const createDepots = `
+
+drop table if exists depots;
+
+create table depots (
+  id int not null auto_increment,
+  name varchar(20) not null,
+  postCode varchar(30) not null,
+  fleetSize varchar(30) null,
+  primary key (id)
+);
+
+alter table depots auto_increment=1;
+
+insert into depots (name, postCode, fleetSize) 
+values
+
+('Horwich', 'HO1 8XJ', 26),
+('Stockport', 'M18 7TQ', 13),
+('Liverpool', 'L1 1DA', 15),
+('Dumfirmline', 'KY11 3AE', 11),
+('Watford', 'WD17 1AP', 20),
+('Milton Keynes', 'MK10 1SZ', 23),
+('Crewe', 'CW1 2BS', 14),
+('Cardiff', 'CF10 1BE', 8),
+('Southampton', 'SO14 0AH', 9),
+('Wolverhampton', 'WV1 1HB', 16),
+('Brighton', 'BN41 1HS', 6),
+('Southend', 'SS2 4DY', 8),
+('Middlesbrough', 'TS3 6AF', 23),
+('Blackpool', 'FY3 8DF', 11),
+('Derby', 'DE4 2HE', 25),
+('Leeds', 'LS2 8JS', 18),
+('Oldham', 'OL1 3EG', 5),
+('Reading', 'RG1 3YL', 13),
+('Blackburn', 'BB2 1NA', 19),
+('York', 'YO10 3FQ', 9);
+
+`;
