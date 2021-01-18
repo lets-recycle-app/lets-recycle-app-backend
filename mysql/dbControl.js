@@ -21,20 +21,38 @@ export const dbControl = () => {
   let connectSecret = '';
   let db;
 
-  const executeSQL = (sql) => {
-    let sqlStatement = sql;
-
-    if (!sqlStatement) {
-      sqlStatement = 'show variables like "%version%";';
-    }
-
-    db.query(sqlStatement,
-      (error, results) => {
+  const execSingleSql = (sql) => {
+    if (sql.length > 0) {
+      db.query(sql, (error, results) => {
         if (error) {
           throw error;
         }
-        results.forEach((x) => console.log(x));
+
+        if (results.length > 0) {
+          results.forEach((x) => console.log(x));
+        }
       });
+    }
+  };
+
+  const executeSQL = (fullSql) => {
+    // receive an array of sql strings each containing
+    // one or more sql statements separated by semi-colon.
+
+    // remove new all newline characters from each individual sql
+
+    const sqlArray = fullSql.split(';').map((s) => s.replace(/(\r\n|\n|\r)/gm, ''));
+
+    (async () => {
+      const initialPromise = Promise.resolve(null);
+
+      await sqlArray.reduce(
+        (p, spec) => p.then(() => execSingleSql(spec)),
+        initialPromise,
+      );
+
+      db.end();
+    })();
   };
 
   const runSql = (sqlStatement) => {
@@ -42,7 +60,6 @@ export const dbControl = () => {
       .then((awsSecret) => { connectSecret = JSON.parse(awsSecret.toString()); })
       .then(() => { db = mysql.createConnection(connectSecret); })
       .then(() => { executeSQL(sqlStatement); })
-      .then(() => { db.end(); })
       .catch((error) => { console.log('Fail:', error); });
   };
 

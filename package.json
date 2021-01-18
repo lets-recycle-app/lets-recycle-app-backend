@@ -9,7 +9,8 @@
     "aws-sdk": "^2.828.0"
   },
   "scripts": {
-    "start": "node --no-warnings mysql/dbSetup.js",
+    "start": "node --no-warnings mysql/databaseSetup.js",
+    "databaseSetup": "node --no-warnings mysql/databaseSetup.js",
     "eslint": "eslint --fix ./"
   },
   "devDependencies": {

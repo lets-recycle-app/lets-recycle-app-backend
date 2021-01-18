@@ -1,4 +1,8 @@
-# MySQL dbSetup.js
+# MySQL databaseSetup.js
+
+```javascript
+npm databaseSetup
+````
 
 To install/reinstall MySQL tables and static data for a database hosted on AWS.
 
@@ -22,8 +26,28 @@ db.setRegion('eu-west-2');
 db.setInstance('prod-instance');
 ```
 
-Execute an SQL statement by passing a valid string parameter to db.runSql() e.g.
+Execute any SQL statement by passing a valid string parameter to db.runSql() e.g.
 ```javascript
 db.runSql('show tables');
 ```
 
+Multiple SQL statements can be defined in a single string variable. 
+The sql statements will be executed asynchronously in order e.g.
+
+
+```javascript
+const clearUsers = `
+
+delete from users;
+
+alter table users auto_increment=1;
+
+insert into users (permission, forename, surname) 
+values
+('driver', 'Alice', 'Brown'),
+('driver', 'Bob', 'Newman');
+
+`;
+
+db.runSql(clearUsers);
+```
