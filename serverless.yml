@@ -1,4 +1,4 @@
-service: lets-recycle-app-lamda
+service: lets-recycle-app-lambda
 frameworkVersion: '2'
 
 provider:
