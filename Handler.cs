@@ -12,7 +12,7 @@ namespace AwsDotnetCsharp
            ArrayList tasks = new ArrayList();
            Task t1 = new Task("XA-1001", "Visit Manchester", false);
            Task t2 = new Task("XA-1002", "Visit London", false);
-           Task t3 = new Task("XA-1003", "Visit Liverpool", false);
+           Task t3 = new Task("XA-1003", "Visit XLiverpool", false);
 
            tasks.Add(t1);
            tasks.Add(t2);

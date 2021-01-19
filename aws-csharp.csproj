@@ -17,4 +17,8 @@
     <None Remove="build.sh" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="build.sh" />
+  </ItemGroup>
+
 </Project>
