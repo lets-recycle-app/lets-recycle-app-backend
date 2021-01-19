@@ -25,7 +25,7 @@ namespace AwsDotnetCsharp
            {
                Info t1 = new Info("UK-1001", "Visit Manchester", false);
                Info t2 = new Info("UK-1002", "Visit London", false);
-               Info t3 = new Info("UK-1003", "Visit XLiverpool", false);
+               Info t3 = new Info("UK-1003", "Visit Liverpool", false);
                
                dataList.Add(t1);
                dataList.Add(t2);
@@ -48,6 +48,9 @@ namespace AwsDotnetCsharp
        
        public APIGatewayProxyResponse SaveData(APIGatewayProxyRequest request)
        {
+           
+           Info info = JsonSerializer.Deserialize<Info>(request.Body);
+           
            return new APIGatewayProxyResponse
            {
                Headers = new Dictionary<string, string>
@@ -55,7 +58,7 @@ namespace AwsDotnetCsharp
                    { "Content-Type", "application/json" }, 
                    { "Access-Control-Allow-Origin", "*" } 
                },
-               Body = "Data Saved",
+               Body = info.Description,
                StatusCode = 200
            };
        }
@@ -63,13 +66,17 @@ namespace AwsDotnetCsharp
 
     public class Info
     {
-        public string DataId { get; }
-        public string Description { get; }
-        public bool Completion { get; }
+        public string DataId { get; set; }
+        public string Description { get; set; }
+        public bool Completion { get; set; }
         
-        public Info(string dataId, string _description, bool _completion)
+        public Info() {
+            
+        }
+
+        public Info(string _dataId, string _description, bool _completion)
         {
-            DataId = dataId;
+            DataId = _dataId;
             Description = _description;
             Completion = _completion;
         }
