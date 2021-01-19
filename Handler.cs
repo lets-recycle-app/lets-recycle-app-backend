@@ -2,6 +2,8 @@ using System.Collections;
 using Amazon.Lambda.Core;
 using System.Collections.Generic;
 using Amazon.Lambda.APIGatewayEvents;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 [assembly:LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
 namespace AwsDotnetCsharp
@@ -9,7 +11,7 @@ namespace AwsDotnetCsharp
     public class Handler
     {
         
-       public ArrayList GetTasks(APIGatewayProxyRequest request)
+       public APIGatewayProxyResponse GetTasks(APIGatewayProxyRequest request)
        {
            string userId = request.PathParameters["userId"];
            ArrayList tasks = new ArrayList();
@@ -32,7 +34,16 @@ namespace AwsDotnetCsharp
            
            //LambdaLogger.Log("Getting Tasks For " +userId);
            
-           return tasks;
+           return new APIGatewayProxyResponse
+           {
+                Headers = new Dictionary<string, string>
+                { 
+                    { "Content-Type", "application/json" }, 
+                    { "Access-Control-Allow-Origin", "*" } 
+                },
+                Body = JsonSerializer.Serialize(tasks),
+                StatusCode = 200
+           };
        }
     }
 
