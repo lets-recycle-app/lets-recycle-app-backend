@@ -12,14 +12,25 @@ package:
   individually: true
 
 functions:
-  tasks-api:
-    handler: CsharpHandlers::AwsDotnetCsharp.Handler::GetTasks
+  get-data:
+    handler: CsharpHandlers::AwsDotnetCsharp.Handler::GetData
 
     # you can add packaging information here
     package:
-      artifact: bin/Release/netcoreapp3.1/tasks-api.zip
+      artifact: bin/Release/netcoreapp3.1/data-api.zip
     events:
-       - httpApi:
-            path: /users/{userId}/tasks
-            method: get
+      - httpApi:
+          path: /users/{userId}/data
+          method: get
+          
+  save-data:
+    handler: CsharpHandlers::AwsDotnetCsharp.Handler::SaveData
+
+    # you can add packaging information here
+    package:
+      artifact: bin/Release/netcoreapp3.1/data-api.zip
+    events:
+      - httpApi:
+          path: /users/{userId}/data
+          method: post
             

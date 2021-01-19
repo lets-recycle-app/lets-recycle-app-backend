@@ -11,28 +11,28 @@ namespace AwsDotnetCsharp
     public class Handler
     {
         
-       public APIGatewayProxyResponse GetTasks(APIGatewayProxyRequest request)
+       public APIGatewayProxyResponse GetData(APIGatewayProxyRequest request)
        {
            string userId = request.PathParameters["userId"];
-           ArrayList tasks = new ArrayList();
+           ArrayList dataList = new ArrayList();
 
            if (userId == "dan")
            {
-               Task t1 = new Task("GR-1001", "Visit Greece", false);
-               tasks.Add(t1);
+               Info t1 = new Info("GR-1001", "Visit Greece", false);
+               dataList.Add(t1);
            }
            else
            {
-               Task t1 = new Task("UK-1001", "Visit Manchester", false);
-               Task t2 = new Task("UK-1002", "Visit London", false);
-               Task t3 = new Task("UK-1003", "Visit XLiverpool", false);
+               Info t1 = new Info("UK-1001", "Visit Manchester", false);
+               Info t2 = new Info("UK-1002", "Visit London", false);
+               Info t3 = new Info("UK-1003", "Visit XLiverpool", false);
                
-               tasks.Add(t1);
-               tasks.Add(t2);
-               tasks.Add(t3);
+               dataList.Add(t1);
+               dataList.Add(t2);
+               dataList.Add(t3);
            }
            
-           //LambdaLogger.Log("Getting Tasks For " +userId);
+           //LambdaLogger.Log("Getting Data For " +userId);
            
            return new APIGatewayProxyResponse
            {
@@ -41,30 +41,37 @@ namespace AwsDotnetCsharp
                     { "Content-Type", "application/json" }, 
                     { "Access-Control-Allow-Origin", "*" } 
                 },
-                Body = JsonSerializer.Serialize(tasks),
+                Body = JsonSerializer.Serialize(dataList),
                 StatusCode = 200
+           };
+       }
+       
+       public APIGatewayProxyResponse SaveData(APIGatewayProxyRequest request)
+       {
+           return new APIGatewayProxyResponse
+           {
+               Headers = new Dictionary<string, string>
+               { 
+                   { "Content-Type", "application/json" }, 
+                   { "Access-Control-Allow-Origin", "*" } 
+               },
+               Body = "Data Saved",
+               StatusCode = 200
            };
        }
     }
 
-    public class Task
+    public class Info
     {
-        public string TaskId { get; }
+        public string DataId { get; }
         public string Description { get; }
         public bool Completion { get; }
         
-        public Task(string _taskId, string _description, bool _completion)
+        public Info(string dataId, string _description, bool _completion)
         {
-            TaskId = _taskId;
+            DataId = dataId;
             Description = _description;
             Completion = _completion;
         }
-    }
-
-    public class Request
-    {
-      public string Key1 {get; set;}
-      public string Key2 {get; set;}
-      public string Key3 {get; set;}
     }
 }
