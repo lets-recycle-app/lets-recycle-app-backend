@@ -13,13 +13,13 @@ package:
 
 functions:
   tasks-api:
-    handler: CsharpHandlers::AwsDotnetCsharp.Handler::Tasks
+    handler: CsharpHandlers::AwsDotnetCsharp.Handler::GetTasks
 
     # you can add packaging information here
     package:
       artifact: bin/Release/netcoreapp3.1/tasks-api.zip
     events:
        - httpApi:
-            path: /tasks
+            path: /users/{userId}/tasks
             method: get
             
