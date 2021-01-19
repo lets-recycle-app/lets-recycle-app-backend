@@ -7,7 +7,7 @@ namespace AwsDotnetCsharp
 {
     public class Handler
     {
-       public ArrayList Hello(Request request)
+       public ArrayList Tasks(Request request)
        {
            ArrayList tasks = new ArrayList();
            Task t1 = new Task("XA-1001", "Visit Manchester", false);
