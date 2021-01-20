@@ -10,6 +10,7 @@ create table routes (
     routeAction varchar(10) not null,       /* deliver or recycle */
     itemType varchar(30) not null,          /* fridge, freezer etc. */
     status varchar(10) not null,            /* pending, completed, failed */
+    refNo  varchar(50) not null,            /* reference no supplied to customer */
     primary key (depotId, driverId, routeDate)
 );
 `;
@@ -19,11 +20,11 @@ export const createDepots = `
 drop table if exists depots;
 
 create table depots (
-  id int not null auto_increment,
-  depotName varchar(50) not null,
-  postCode varchar(10) not null,
-  fleetSize int not null,
-  primary key (id)
+  depotId int not null auto_increment,      /* depotId auto created */
+  depotName varchar(50) not null,           /* depot town name */   
+  postCode varchar(10) not null,            /* depot post code */
+  fleetSize int not null,                   /* number of drivers attached to depot */
+  primary key (depotId)
 );
 
 alter table depots auto_increment=1;
@@ -59,9 +60,8 @@ create table drivers (
     driverId int not null auto_increment,   /* driverId auto created */
     driverName varchar(50) not null,        /* free format driver name */
     truckSize int not null,                 /* cubic capacity of truck */
-    userName varchar(50) not null,         /* app sign-in user name */
-    apiKey  varchar(50) null,              /* app sign-in api key */
-    refNo   varchar(50) null,              /* app sign-in refno */
+    userName varchar(50) not null,          /* app sign-in user name */
+    apiKey  varchar(50) null,               /* app sign-in api key */
     primary key (driverId)
 );
     
@@ -72,11 +72,11 @@ export const createAdmins = `
 drop table if exists admins;
 
 create table admins (
-    adminId int not null auto_increment,   /* adminId auto created */
-    adminName varchar(50) not null,        /* free format admin name */
-    userName varchar(50) not null,        /* app sign-in user name */
-    apiKey  varchar(50) null,             /* app sign-in api key */
-    refNo   varchar(50) null,             /* app sign-in refno */
+    adminId int not null auto_increment,    /* adminId auto created */
+    adminName varchar(50) not null,         /* free format admin name */
+    userName varchar(50) not null,          /* app sign-in user name */
+    apiKey  varchar(50) null,               /* app sign-in api key */
+   
     primary key (adminId)
 );
     
