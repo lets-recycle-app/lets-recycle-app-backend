@@ -76,7 +76,6 @@ create table admins (
     adminName varchar(50) not null,         /* free format admin name */
     userName varchar(50) not null,          /* app sign-in user name */
     apiKey  varchar(50) null,               /* app sign-in api key */
-   
     primary key (adminId)
 );
     
