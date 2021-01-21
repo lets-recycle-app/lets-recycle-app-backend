@@ -26,10 +26,8 @@ db.setRegion('eu-west-2');
 db.setInstance('prod-instance');
 ```
 
-Add SQL statement text to a single threaded processing queue 
-in the order of execution required.
-
-Execute any SQL statement by passing a valid string parameter to db.addQueue() e.g.
+Add SQL statement text in the order of execution required to a single threaded processing queue with db.addQueue(). 
+Execute the SQL queue by calling db.processQueue() e.g.
 ```javascript
 
 db.addQueue('show tables');
@@ -86,11 +84,9 @@ The above SQL queue will execute with the following output
 { 2 , Bob , Newman , Finance }
 
 #####
-
-  [
-  { id: 1, forename: 'Alice', surname: 'Brown', department: 'A
-    dmin' },
-{ id: 2, forename: 'Bob', surname: 'Newman', department: 'Fi
-  nance' }
+  
+[
+  { id: 1, forename: 'Alice', surname: 'Brown', department: 'Admin' },
+  { id: 2, forename: 'Bob', surname: 'Newman', department: 'Finance' }
 ]
 ```
