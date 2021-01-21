@@ -1,10 +1,33 @@
-import faker from 'faker';
+import { dbControl } from './dbControl.js';
 
-// mock data population
+const db = dbControl();
+db.setRegion('eu-west-2');
+db.setInstance('prod-mysql');
 
-const randomName = faker.name.findName();
-const randomEmail = faker.internet.email(); // Kassandra.Haley@erich.biz
-//const randomCard = faker.helpers.createCard(); // random contact card containing many properties
+export const sql1 = `
+select * from depots;
+`;
 
+export const sql2 = `
+select * from users;
+select * from users;
+`;
+export const sql3 = 'select 3 from dual;';
+export const sql4 = 'select 4 from dual;';
 
-console.log(randomEmail);
+const postProcess = () => {
+  db.showResults('depots');
+  db.showResults('users');
+};
+
+const interim = () => {
+  console.log('Calling interim');
+};
+
+db.addQueue(sql1, 'depots');
+db.addQueue(interim);
+db.addQueue(sql1, 'depots');
+db.addQueue(sql2, 'users');
+
+db.processQueue()
+  .then(() => { postProcess(); });

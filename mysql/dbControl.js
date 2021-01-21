@@ -20,54 +20,147 @@ export const dbControl = () => {
   let instanceName = 'none';
   let connectSecret = '';
   let db;
+  const preQueue = [];
+  const postQueue = [];
+  const resultsArray = [];
 
-  const execSingleSql = (sql) => {
-    if (sql.length > 0) {
-      db.query(sql, (error, results) => {
-        if (error) {
-          throw error;
-        }
-
-        if (results.length > 0) {
-          results.forEach((x) => console.log(x));
-        }
-      });
-    }
-  };
-
-  const executeSQL = (fullSql) => {
-    // receive an array of sql strings each containing
-    // one or more sql statements separated by semi-colon.
-
-    // remove new all newline characters from each individual sql
-
-    const sqlArray = fullSql.split(';').map((s) => s.replace(/(\r\n|\n|\r)/gm, ''));
-
-    (async () => {
-      const initialPromise = Promise.resolve(null);
-
-      await sqlArray.reduce(
-        (p, spec) => p.then(() => execSingleSql(spec)),
-        initialPromise,
-      );
-
-      db.end();
-    })();
-  };
-
-  const runSql = (sqlStatement) => {
+  const dbConnect = () => new Promise((resolve) => {
     (getSecretObject(regionName, instanceName))
       .then((awsSecret) => { connectSecret = JSON.parse(awsSecret.toString()); })
       .then(() => { db = mysql.createConnection(connectSecret); })
-      .then(() => { executeSQL(sqlStatement); })
-      .catch((error) => { console.log('Fail:', error); });
+      .then(() => { resolve(null); });
+  });
+
+  const dbClose = () => new Promise((resolve) => {
+    db.end();
+    resolve('closed');
+  });
+
+  const dbExecSql = (sql, id) => new Promise((resolve, reject) => {
+    if (sql.length > 0) {
+      // only process sql statement if it has a length
+      db.query(sql, (error, mySqlresult) => {
+        // running mySQL statement
+        if (error) {
+          // sql statement failed, so close database
+          dbClose();
+          reject(new Error('sql failed'));
+        } else if (id) {
+          // if an id has been sent with the sql statement
+          // store the sql output in the resultsArray
+
+          let resultEntry = resultsArray.find((item) => item.id === id);
+
+          if (!resultEntry) {
+            // this is the first time this id has been
+            // used so create an object store in the resultsArray
+
+            resultEntry = { id, data: [] };
+            resultsArray.push(resultEntry);
+          }
+
+          // place each output row returned from mySql
+          // into the data array for this sql statement id
+
+          mySqlresult.forEach((row) => {
+            resultEntry.data.push(row);
+          });
+        }
+        resolve(null);
+      });
+    }
+  });
+
+  const addQueue = (data, id) => {
+    preQueue.push({ data, id });
+  };
+
+  const processQueue = () => new Promise((resolve) => {
+    // run all sql statements and procesing functions
+    // as a single threaded process
+
+    (async () => {
+      preQueue.forEach((queueItem) => {
+        if (typeof queueItem.data === 'string') {
+          // create separate queue tasks for any sql strings that
+          // contain more than one statements in them separated by
+          // a semi-colon.
+
+          // remove new all newline characters from each individual sql
+          // and place each statement into an individual array;
+
+          const itemArray = queueItem.data.split(';').map((s) => s.replace(/(\r\n|\n|\r)/gm, ''));
+
+          itemArray.forEach((singleItem) => {
+            if (singleItem.length) {
+              postQueue.push({ data: singleItem, id: queueItem.id });
+            }
+          });
+        } else {
+          // do not modified functions, just add to the final queue
+          postQueue.push({ data: queueItem.data, id: queueItem.id });
+        }
+      });
+
+      // add database connect as the first task in the process queue
+      postQueue.unshift({ type: 'func', data: dbConnect });
+
+      // add database close as the last task in the process queue
+      postQueue.push({ type: 'func', data: dbClose });
+
+      const firstPromise = Promise.resolve(null);
+
+      await postQueue.reduce(
+        (p, queueItem) => p.then(() => {
+          if (typeof queueItem.data === 'string') {
+            return (dbExecSql(queueItem.data, queueItem.id));
+          }
+
+          // execute queueItem as a function()
+          return (queueItem.data());
+        }),
+        firstPromise,
+      );
+      resolve(null);
+    }
+    )();
+  });
+
+  const fetchResults = (id) => {
+    const entryObject = resultsArray.find((x) => x.id === id);
+    if (entryObject) {
+      return entryObject.data;
+    }
+
+    return {};
+  };
+
+  const showResults = (id) => {
+    const result = fetchResults(id);
+
+    if (result.length > 0) {
+      let screenOutput = '';
+      result.forEach((row) => {
+        screenOutput += '{';
+        Object.keys(row).forEach((key) => {
+          screenOutput += ` ${row[key]} ,`;
+        });
+        screenOutput += '}\n';
+      });
+
+
+      console.log(screenOutput);
+    }
   };
 
   return (
     {
       setRegion: (value) => { regionName = value; },
       setInstance: (value) => { instanceName = value; },
-      runSql: (value) => runSql(value),
+      fetchResults,
+      showResults,
+      processQueue,
+      addQueue,
     }
   );
 };
