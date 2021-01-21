@@ -25,7 +25,6 @@ const db = dbControl();
 db.setRegion('eu-west-2');
 db.setInstance('prod-instance');
 ```
-// add sql statement text 
 
 Add SQL statement text to a single threaded processing queue 
 in the order of execution required.
