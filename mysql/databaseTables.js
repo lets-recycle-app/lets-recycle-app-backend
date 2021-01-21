@@ -92,6 +92,8 @@ create table addresses (
     customerEmail varchar(100) not null,    /* customer email address */
     locationType varchar(10) not null,      /* "private" or "public" address type */  
     fullAddress varchar(100) not null,      /* free format address details */
+    houseNo varchar(10) not null,           /* house or building number */
+    street varchar(50) not null,            /* street name */
     townAddress varchar(50) null,           /* free format address town/city */
     notes varchar(200) null,                /* free format notes field */
     primary key (addressId)                 
