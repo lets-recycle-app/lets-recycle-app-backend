@@ -10,7 +10,7 @@ select * from depots;
 
 export const sql2 = `
 select * from users;
-select * from users;
+show tables;
 `;
 export const sql3 = 'select 3 from dual;';
 export const sql4 = 'select 4 from dual;';

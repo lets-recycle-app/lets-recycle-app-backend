@@ -128,11 +128,18 @@ export const dbControl = () => {
 
   const fetchResults = (id) => {
     const entryObject = resultsArray.find((x) => x.id === id);
+    const returnObject = [];
     if (entryObject) {
-      return entryObject.data;
+      entryObject.data.forEach((row) => {
+        const rowObject = {};
+        Object.keys(row).forEach((key) => {
+          rowObject[key] = row[key];
+        });
+        returnObject.push(rowObject);
+      });
     }
 
-    return {};
+    return returnObject;
   };
 
   const showResults = (id) => {
@@ -141,13 +148,22 @@ export const dbControl = () => {
     if (result.length > 0) {
       let screenOutput = '';
       result.forEach((row) => {
-        screenOutput += '{';
-        Object.keys(row).forEach((key) => {
-          screenOutput += ` ${row[key]} ,`;
-        });
-        screenOutput += '}\n';
-      });
+        // get string value of the last key in this data row
 
+        const lastKey = (Object.keys(row).slice(-1)).toString();
+
+        screenOutput += '{';
+
+        Object.keys(row).forEach((key) => {
+          screenOutput += ` ${row[key]}`;
+
+          if (key !== lastKey) {
+            // do not add comma on the last key
+            screenOutput += ' ,';
+          }
+        });
+        screenOutput += ' }\n';
+      });
 
       console.log(screenOutput);
     }
