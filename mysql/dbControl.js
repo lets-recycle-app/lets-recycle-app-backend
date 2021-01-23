@@ -28,8 +28,10 @@ export const dbControl = () => {
   });
 
   const close = () => new Promise((resolve) => {
+    db.commit();
+    console.log('Database closing');
     db.end();
-    resolve('database closed.');
+    resolve('database closed');
   });
 
   const showTable = (rowData) => {
