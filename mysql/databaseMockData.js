@@ -1,5 +1,5 @@
-import { dbControl } from './dbControl.js';
 import { asyncList } from './asyncList.js';
+import { dbControl } from './dbControl.js';
 
 const clearUsers = `
 
@@ -38,4 +38,6 @@ a.add(db.sql, { sql: fetchUsers, id: 'users' });
 a.add(db.sql, { sql: fetchDepots, id: 'depots' });
 a.add(createRandom, { id: 'random' });
 a.add(db.close);
-a.run();
+a.run().then(() => {
+  console.log('Installation completed.');
+});

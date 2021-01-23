@@ -80,7 +80,6 @@ export const dbControl = () => {
           if (inputParams.id) {
             // output is a table select so convert output to a table json object
             inputParams.procOutput.put(inputParams.id, results);
-            console.log('HEREA', inputParams.procOutput.fetch(inputParams.id));
           }
         } catch (e) {
           // output is not a table select so just store the text under the id
@@ -109,11 +108,10 @@ export const dbControl = () => {
     const queue = asyncList();
 
     sqlArray.forEach((singleSql) => {
-      Object.assign(inputParams, { sql: singleSql });
-      queue.add(runSingleSql, inputParams);
+      queue.add(runSingleSql, { sql: singleSql });
     });
+
     queue.run()
-      .then(() => { console.log('All Over', inputParams.procOutput.getStore()); })
       .then(() => { completed('sql batch completed.'); });
   });
 
