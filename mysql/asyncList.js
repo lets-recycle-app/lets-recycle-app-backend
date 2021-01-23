@@ -1,4 +1,4 @@
-export const asyncList = () => {
+export const asyncList = (previousStore = null) => {
   const procList = [];
   const showLog = false;
 
@@ -14,10 +14,15 @@ export const asyncList = () => {
     };
   };
 
-  const procOutput = dataStore();
+  let procOutput = dataStore();
+
+  if (previousStore) {
+    procOutput = previousStore;
+  }
 
   const add = (funcToCall, dataObject = {}) => {
-    // store the procOutput function globally for read/write access
+    // store the procOutput function for read/write access
+
     procOutput.put('procOutput', procOutput);
 
     // add a placeholder for this id's data output

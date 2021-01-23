@@ -79,6 +79,7 @@ export const dbControl = () => {
 
           if (inputParams.id) {
             // output is a table select so convert output to a table json object
+
             inputParams.procOutput.put(inputParams.id, results);
           }
         } catch (e) {
@@ -105,10 +106,12 @@ export const dbControl = () => {
     // {sql: sqlStatement, storeFn: func.get/set, [id: storageId]
 
     // create a child queue of single sql statements and run asynchronously.
-    const queue = asyncList();
+    // pass the parent process output object to the child queue.
+
+    const queue = asyncList(inputParams.procOutput);
 
     sqlArray.forEach((singleSql) => {
-      queue.add(runSingleSql, { sql: singleSql });
+      queue.add(runSingleSql, { sql: singleSql, id: inputParams.id, procOutput: inputParams.procOutput });
     });
 
     queue.run()

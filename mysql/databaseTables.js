@@ -31,7 +31,6 @@ alter table depots auto_increment=1;
 
 insert into depots (depotName, postCode, fleetSize) 
 values
-
 ('Horwich', 'HO1 8XJ', 26),
 ('Stockport', 'M18 7TQ', 13),
 ('Liverpool', 'L1 1DA', 15),
@@ -58,6 +57,7 @@ drop table if exists drivers;
 
 create table drivers (
     driverId int not null auto_increment,   /* driverId auto created */
+    depotId int not null,                   /* allocated depotId for driver */
     driverName varchar(50) not null,        /* free format driver name */
     truckSize int not null,                 /* cubic capacity of truck */
     userName varchar(50) not null,          /* app sign-in user name */
