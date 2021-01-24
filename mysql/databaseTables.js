@@ -28,30 +28,8 @@ create table depots (
 );
 
 alter table depots auto_increment=1;
-
-insert into depots (depotName, postCode, fleetSize) 
-values
-('Horwich', 'HO1 8XJ', 26),
-('Stockport', 'M18 7TQ', 13),
-('Liverpool', 'L1 1DA', 15),
-('Dumfirmline', 'KY11 3AE', 11),
-('Watford', 'WD17 1AP', 20),
-('Milton Keynes', 'MK10 1SZ', 23),
-('Crewe', 'CW1 2BS', 14),
-('Cardiff', 'CF10 1BE', 8),
-('Southampton', 'SO14 0AH', 9),
-('Wolverhampton', 'WV1 1HB', 16),
-('Brighton', 'BN41 1HS', 6),
-('Southend', 'SS2 4DY', 8),
-('Middlesbrough', 'TS3 6AF', 23),
-('Blackpool', 'FY3 8DF', 11),
-('Derby', 'DE4 2HE', 25),
-('Leeds', 'LS2 8JS', 18),
-('Oldham', 'OL1 3EG', 5),
-('Reading', 'RG1 3YL', 13),
-('Blackburn', 'BB2 1NA', 19),
-('York', 'YO10 3FQ', 9);
 `;
+
 export const createDrivers = `
 drop table if exists drivers;
 
@@ -64,7 +42,7 @@ create table drivers (
     apiKey  varchar(50) null,               /* app sign-in api key */
     primary key (driverId)
 );
-    
+
 alter table drivers auto_increment=1;
 `;
 
@@ -78,7 +56,7 @@ create table admins (
     apiKey  varchar(50) null,               /* app sign-in api key */
     primary key (adminId)
 );
-    
+
 alter table admins auto_increment=1;
 `;
 

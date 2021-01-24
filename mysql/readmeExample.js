@@ -1,7 +1,8 @@
 import { asyncList } from './asyncList.js';
 import { dbControl } from './dbControl.js';
+import { showTable } from './dbUtils.js';
 
-const clearUsers = `
+const createUsers = `
 
 drop table if exists users;
 
@@ -21,23 +22,16 @@ values
 ('Bob', 'Newman', 'Finance');
 `;
 
-const fetchUsers = 'select * from users;';
-const fetchDepots = 'select * from depots;';
-
 const db = dbControl();
 const a = asyncList();
 
-const createRandom = (data) => new Promise((completed) => {
-  console.log('Create Random ', data.procOutput.getStore());
-  completed(null);
-});
-
 a.add(db.connect, { region: 'eu-west-2', dbInstance: 'prod-mysql' });
-a.add(db.sql, { sql: clearUsers, id: 'clearUsers' });
-a.add(db.sql, { sql: fetchUsers, id: 'users' });
-a.add(db.sql, { sql: fetchDepots, id: 'depots' });
-a.add(createRandom, { id: 'random' });
-a.add(db.close);
+a.add(db.sql, { sql: createUsers });
+a.add(db.sql, { sql: 'select * from users;', id: 'users' });
+
 a.run().then(() => {
-  console.log('Installation completed.');
+  db.close();
+  showTable(a.fetch('users'));
+  console.log('#####\n');
+  console.log(a.fetch('users'));
 });

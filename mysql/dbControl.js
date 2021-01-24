@@ -28,31 +28,6 @@ export const dbControl = () => {
       .catch((error) => { completed(`error: database connect ${error}`); });
   });
 
-  const showTable = (rowData) => {
-    if (rowData.length > 0) {
-      let screenOutput = '';
-      rowData.forEach((row) => {
-        // get string value of the last key in this data row
-
-        const lastKey = (Object.keys(row).slice(-1)).toString();
-
-        screenOutput += '{';
-
-        Object.keys(row).forEach((key) => {
-          screenOutput += ` ${row[key]}`;
-
-          if (key !== lastKey) {
-            // do not add comma on the last key
-            screenOutput += ' ,';
-          }
-        });
-        screenOutput += ' }\n';
-      });
-
-      console.log(screenOutput);
-    }
-  };
-
   const runSingleSql = (inputParams) => new Promise((completed) => {
     // run a single valid sql statement
 
@@ -119,7 +94,6 @@ export const dbControl = () => {
       connect,
       close: () => db.end(),
       sql,
-      showTable,
     }
   );
 };

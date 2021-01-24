@@ -4,6 +4,7 @@ import { createUsers, createCollRequest } from './databaseLegacyTables.js';
 import {
   createRoutes, createDepots, createDrivers, createAdmins, createAddresses,
 } from './databaseTables.js';
+import { createCoreData } from './databaseCoreData.js';
 
 const a = asyncList();
 const db = dbControl();
@@ -26,8 +27,8 @@ a.add(db.sql, { sql: createDepots });
 a.add(db.sql, { sql: createDrivers });
 a.add(db.sql, { sql: createAdmins });
 a.add(db.sql, { sql: createAddresses });
-
-a.add(db.close);
+a.add(createCoreData);
 a.run().then(() => {
-  console.log('Installation completed.');
+  db.close();
+  console.log('full database installation completed.');
 });
