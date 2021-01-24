@@ -17,6 +17,7 @@ export const asyncList = (previousStore = null) => {
   let procOutput = dataStore();
 
   if (previousStore) {
+    // allow the sub queues to inherit the parent data
     procOutput = previousStore;
   }
 
@@ -30,26 +31,33 @@ export const asyncList = (previousStore = null) => {
       procOutput.put(dataObject.id, []);
     }
 
+    // add process and the parameter store to the process queue
     procList.push({
       execFunction: funcToCall,
       execParams: Object.assign(dataObject, { ...procOutput.getStore() }),
     });
   };
 
-  const run = async () => {
+  const run = () => new Promise((completed) => {
     const log = (result) => {
       if (showLog) {
         console.log('=>', result);
       }
     };
 
-    await procList.reduce(
-      (activePromise, process) => activePromise.then(
-        () => process.execFunction(process.execParams).then(log),
-      ),
-      Promise.resolve(null),
-    );
-  };
+    (async () => {
+      // reduce will provide a method for executing
+      // processes asynchronously by placing a terminating
+      // promise of the running process into the accumulator.
+
+      await procList.reduce(
+        (activePromise, process) => activePromise.then(
+          () => process.execFunction(process.execParams).then(log),
+        ),
+        Promise.resolve(null),
+      ).then(() => { completed('completed: last process in list'); });
+    })();
+  });
 
   return {
     add,

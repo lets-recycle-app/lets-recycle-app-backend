@@ -20,18 +20,18 @@ export const dbControl = () => {
   let connectSecret = '';
   let db;
 
-  const connect = (data) => new Promise((resolve) => {
+  const connect = (data) => new Promise((completed) => {
     (getSecretObject(data.region, data.dbInstance))
       .then((awsSecret) => { connectSecret = JSON.parse(awsSecret.toString()); })
       .then(() => { db = mysql.createConnection(connectSecret); })
-      .then(() => { resolve('database connected.'); });
+      .then(() => { completed('completed: database connect'); })
+      .catch((error) => { completed(`error: database connect ${error}`); });
   });
 
-  const close = () => new Promise((resolve) => {
-    db.commit();
-    console.log('Database closing');
-    db.end();
-    resolve('database closed');
+  const close = () => new Promise((completed) => {
+    db.end()
+      .then(() => { completed('database closed'); })
+      .catch((error) => { completed(`error: database close ${error}`); });
   });
 
   const showTable = (rowData) => {
@@ -65,12 +65,11 @@ export const dbControl = () => {
     const results = [];
     db.query(inputParams.sql, (error, mySqlResult) => {
       if (error) {
-        close().then(completed);
+        completed(`error: sql ${inputParams.sql.slice(0, 25)}`);
       } else {
         try {
           // try to convert raw sql output
           // to JSON column data
-
           mySqlResult.forEach((row) => {
             const rowObject = {};
             Object.keys(row).forEach((key) => {
@@ -84,15 +83,14 @@ export const dbControl = () => {
 
             inputParams.procOutput.put(inputParams.id, results);
           }
+          completed(`completed: sql ${inputParams.sql.slice(0, 25)}`);
         } catch (e) {
           // output is not a table select so just store the text under the id
-
           if (inputParams.id) {
             inputParams.procOutput.put(inputParams.id, mySqlResult);
           }
+          completed(`completed: sql ${inputParams.sql.slice(0, 25)}`);
         }
-
-        completed(results);
       }
     });
   });
@@ -117,13 +115,14 @@ export const dbControl = () => {
     });
 
     queue.run()
-      .then(() => { completed('sql batch completed.'); });
+      .then(() => { completed('completed: async sql process list'); })
+      .catch((error) => { completed(`error: async sql process list ${error}`); });
   });
 
   return (
     {
       connect,
-      close,
+      close: () => db.end(),
       sql,
       showTable,
     }
