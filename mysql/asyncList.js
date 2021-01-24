@@ -63,5 +63,6 @@ export const asyncList = (previousStore = null) => {
     add,
     run,
     fetch: (id) => procOutput.fetch(id),
+    fetchAll: () => procOutput,
   };
 };

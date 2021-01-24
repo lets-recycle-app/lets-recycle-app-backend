@@ -1,57 +1,86 @@
 import { dbControl } from './dbControl.js';
 import { asyncList } from './asyncList.js';
+import {
+  getRandomInt, createFutureDates, createDriverDeliveryRoute,
+} from './dbUtils.js';
 
 const db = dbControl();
-const a = asyncList();
 
-const createRoute = (data) => new Promise((completed) => {
-  const depotArray = data.procOutput.fetch('depots');
-  const dateArray = data.procOutput.fetch('routeDates');
+const createDepotDriverRoutes = (data) => new Promise((completed) => {
+  const allocatedDrivers = data.r.fetch('allocatedDrivers');
+  const { date, depot } = data;
 
-  depotArray.map((depot) => {
-    dateArray.map((date) => {
-      // for each depo on each day we have a number of possible
-      // routes determined by the max fleet size.
-      const noRoutesToday = depot.fleetSize - getRandomInt(0, 5);
-      const depotPostCode = depot.postCode;
+  let sqlRoute = '';
 
-      const randomDepotDrivers = `select * from drivers where depotId = ${depot.depotId} order by rand() limit ${noRoutesToday};`;
+  if (allocatedDrivers) {
+    allocatedDrivers.forEach((driver) => {
+      // for the current day, depot-driver generate a random route
+      const routeList = createDriverDeliveryRoute(date, depot, driver);
 
-      // console.log(`${date} ${depot.depotName} ${depotPostCode} : ${noRoutesToday}/${depot.fleetSize}`);
-      // console.log(randomDepotDrivers);
+      // now create sql to insert this drivers route
 
-      const r = asyncList(data.procOutput);
-      r.add(db.sql, { sql: randomDepotDrivers, id: 'routeDrivers' });
-      r.run()
-        .then(() => {
-          const routeDriverArray = data.procOutput.fetch('routeDrivers');
+      if (routeList) {
+        sqlRoute += 'insert into routes '
+          + '(depotId, driverId, routeDate, addressId, '
+          + 'routeSeqNo, routeAction, itemType, status, refNo) values ';
 
-          console.log(`YYY: ${date} ${depot.depotName} selected ${noRoutesToday}/${depot.fleetSize} random drivers`);
-          let routeNo = 1;
-          routeDriverArray.forEach((driver) => {
-            console.log(`R ${routeNo} ${driver.depotId} ${driver.driverName}`);
+        routeList.forEach((route) => {
+          sqlRoute += `( ${route.depotId}, ${route.driverId}, '${route.routeDate}',  ${route.addressId},`;
+          sqlRoute += `${route.routeSeqNo}, '${route.routeAction}', '${route.itemType}',`;
+          sqlRoute += `'${route.status}', '${route.refNo}' ),`;
+        });
 
-            routeNo += 1;
-          });
-        })
-        .then(() => { completed(`XXX: ${date} ${depot.depotName} select ${noRoutesToday}/${depot.fleetSize} random drivers`); });
-
-      /*
-      for (let routeNo = 1; routeNo <= noRoutesToday; routeNo += 1) {
-        console.log(depot.depotName, '-', date, '{', depot.fleetSize, '}', routeNo);
+        sqlRoute = sqlRoute.slice(0, -1);
+        sqlRoute += ';';
       }
-
-       */
     });
-  });
+  }
 
-  // completed('completed: create routes');
+  // run using the same database
+  // connection as the main thread
+
+  const z = asyncList();
+
+  if (sqlRoute) {
+    z.add(db.sql, { sql: sqlRoute });
+  }
+
+  z.run()
+    .then(() => { completed('completed:driver routes allocated'); });
 });
 
-a.add(db.connect, { region: 'eu-west-2', dbInstance: 'prod-mysql' });
-a.add(createFutureDates);
-a.add(createRoute);
+const generateRouteData = (data) => new Promise((completed) => {
+  const dateArray = createFutureDates(2);
+  const depotArray = data.a.fetch('depots');
 
+  depotArray.forEach((depot) => {
+    dateArray.forEach((date) => {
+      // for each depot on each day we have a number of possible
+      // routes up to a maximum of the depot fleet size.
+
+      const noRoutesToday = depot.fleetSize - getRandomInt(0, 5);
+
+      // randomly select drivers from the depot fleet to fill the current day's delivery routes
+      const randomDepotDrivers = `select * from drivers where depotId = ${depot.depotId} order by rand() limit ${noRoutesToday};`;
+
+      const r = asyncList(data.procOutput);
+      r.add(db.sql, { sql: 'delete from routes' });
+      r.add(db.sql, { sql: randomDepotDrivers, id: 'allocatedDrivers' });
+      // generate routes for this date and depot for every driver selected for delivery duties
+      r.add(createDepotDriverRoutes, {
+        db, r, date, depot,
+      });
+
+      r.run()
+        .then(() => { completed('completed: delivery routes all allocated.'); });
+    });
+  });
+});
+
+const a = asyncList();
+a.add(db.connect, { region: 'eu-west-2', dbInstance: 'prod-mysql' });
+a.add(db.sql, { sql: 'select * from depots', id: 'depots' });
+a.add(generateRouteData, { db, a });
 a.run()
-  .then(() => { db.close(); })
-  .then(() => { console.log('completed: main async process list.'); });
+  //.then(() => { db.close(); console.log('route data generation completed'); });
+  .then(() => { console.log('route data generation completed'); });

@@ -33,15 +33,13 @@ values
 const createDriversData = (data) => new Promise((completed) => {
   const depotArray = data.a.fetch('depots');
 
-  let sqlText = '';
-
-  sqlText += 'delete from drivers;\n';
-  sqlText += 'alter table drivers auto_increment=1;\n';
-
   // for each depot create a total of depot.fleetSize new drivers
 
   let sqlDrivers = '';
   if (depotArray) {
+    sqlDrivers += 'delete from drivers;\n';
+    sqlDrivers += 'alter table drivers auto_increment=1;\n';
+
     sqlDrivers += 'insert into drivers (driverName, depotId, truckSize, userName, apiKey) values';
 
     depotArray.forEach((depot) => {
@@ -58,7 +56,6 @@ const createDriversData = (data) => new Promise((completed) => {
   // connection as the main thread
 
   const a = asyncList(data.procOutput);
-  a.add(data.db.sql, { sql: sqlText });
 
   if (sqlDrivers) {
     a.add(data.db.sql, { sql: sqlDrivers });

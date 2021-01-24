@@ -5,13 +5,13 @@ create table routes (
     depotId int not null,                   /* depot Id from table depots */
     driverId int not null,                  /* driver Id from table drivers */
     routeDate date not null,                /* route date */
-    addressId int not null,                 /* address Id from table addresses */
     routeSeqNo int not null,                /* delivery or recycle seq no. in route 1,2,3,... */
+    addressId int not null,                 /* address Id from table addresses */
     routeAction varchar(10) not null,       /* deliver or recycle */
     itemType varchar(30) not null,          /* fridge, freezer etc. */
     status varchar(10) not null,            /* pending, completed, failed */
     refNo  varchar(50) not null,            /* reference no supplied to customer */
-    primary key (depotId, driverId, routeDate)
+    primary key (depotId, driverId, routeDate, routeSeqNo)
 );
 `;
 

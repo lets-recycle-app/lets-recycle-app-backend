@@ -54,9 +54,7 @@ export const showTable = (rowData) => {
   }
 };
 
-export const createFutureDates = () => {
-  const noDaysForward = 1;
-
+export const createFutureDates = (noDaysForward = 7) => {
   const nextDay = new Date();
   const dateArray = [];
 
@@ -66,4 +64,30 @@ export const createFutureDates = () => {
   }
 
   return dateArray;
+};
+
+export const createDriverDeliveryRoute = (date, depot, driver) => {
+  const routeList = [];
+  const noStops = getRandomInt(15, 27);
+
+  for (let seqNo = 1; seqNo <= noStops; seqNo += 1) {
+    const routeDetails = {
+      routeDate: date,
+      depotName: depot.depotName,
+      depotPostCode: depot.postCode,
+      depotId: depot.depotId,
+      driverName: driver.driverName,
+      driverId: driver.driverId,
+      addressId: 222,
+      routeSeqNo: seqNo,
+      routeAction: 'delivery',
+      itemType: 'fridge',
+      status: 'pending',
+      refNo: 'AHJSK123',
+    };
+
+    routeList.push(routeDetails);
+  }
+
+  return routeList;
 };
