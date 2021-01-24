@@ -28,12 +28,6 @@ export const dbControl = () => {
       .catch((error) => { completed(`error: database connect ${error}`); });
   });
 
-  const close = () => new Promise((completed) => {
-    db.end()
-      .then(() => { completed('database closed'); })
-      .catch((error) => { completed(`error: database close ${error}`); });
-  });
-
   const showTable = (rowData) => {
     if (rowData.length > 0) {
       let screenOutput = '';
@@ -65,6 +59,7 @@ export const dbControl = () => {
     const results = [];
     db.query(inputParams.sql, (error, mySqlResult) => {
       if (error) {
+        console.log(error);
         completed(`error: sql ${inputParams.sql.slice(0, 25)}`);
       } else {
         try {

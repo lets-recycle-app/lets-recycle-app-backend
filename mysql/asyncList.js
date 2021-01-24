@@ -1,6 +1,6 @@
 export const asyncList = (previousStore = null) => {
   const procList = [];
-  const showLog = false;
+  const showLog = true;
 
   const dataStore = () => {
     const dataObject = {};

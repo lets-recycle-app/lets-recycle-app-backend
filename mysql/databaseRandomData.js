@@ -20,15 +20,16 @@ const createRandomDrivers = (data) => new Promise((completed) => {
 
   const rowArray = data.procOutput.fetch('depots');
 
+  sqlText += 'insert into drivers (driverName, depotId, truckSize, userName) values';
+
   rowArray.forEach((row) => {
     for (let i = 1; i <= getRandomInt(10, 20); i += 1) {
-      const mockName = faker.name.findName();
-      sqlText += 'insert into drivers (driverName, depotId, truckSize, userName) values';
-      sqlText += `('${mockName}', ${row.depotId}, ${getRandomInt(10, 32)}, '${mockName}');`;
+      const mockName = faker.name.findName().replace(/'/gm, "''");
+      sqlText += `('${mockName}', ${row.depotId}, ${getRandomInt(10, 32)}, '${mockName}'),`;
     }
   });
 
-  sqlText = sqlText.slice(0, -2);
+  sqlText = sqlText.slice(0, -1);
   sqlText += ';';
 
   const r = asyncList(data.procOutput);
