@@ -60,23 +60,20 @@ const createDrivers = (data) => new Promise((completed) => {
 
   // for each depot create a total of depot.fleetSize new drivers
 
-  depotArray.map((depot) => {
+  depotArray.forEach((depot) => {
     for (let driverNo = 1; driverNo <= depot.fleetSize; driverNo += 1) {
       const user = createFakeUser();
       sqlText += `('${user.fullName}', ${depot.depotId}, ${getRandomInt(10, 32)}, '${user.userName}', '${user.apiKey}'),`;
     }
-    return 0;
   });
 
   sqlText = sqlText.slice(0, -1);
   sqlText += ';';
 
-  console.log(sqlText);
   const r = asyncList(data.procOutput);
   r.add(db.sql, { sql: sqlText });
   r.run()
     .then(() => { completed('completed: create random drivers'); });
-
 });
 
 const createRoute = (data) => new Promise((completed) => {
@@ -88,14 +85,39 @@ const createRoute = (data) => new Promise((completed) => {
       // for each depo on each day we have a number of possible
       // routes determined by the max fleet size.
       const noRoutesToday = depot.fleetSize - getRandomInt(0, 5);
+      const depotPostCode = depot.postCode;
 
+      const randomDepotDrivers = `select * from drivers where depotId = ${depot.depotId} order by rand() limit ${noRoutesToday};`;
+
+      // console.log(`${date} ${depot.depotName} ${depotPostCode} : ${noRoutesToday}/${depot.fleetSize}`);
+      // console.log(randomDepotDrivers);
+
+      const r = asyncList(data.procOutput);
+      r.add(db.sql, { sql: randomDepotDrivers, id: 'routeDrivers' });
+      r.run()
+        .then(() => {
+          const routeDriverArray = data.procOutput.fetch('routeDrivers');
+
+          console.log(`YYY: ${date} ${depot.depotName} selected ${noRoutesToday}/${depot.fleetSize} random drivers`);
+          let routeNo = 1;
+          routeDriverArray.forEach((driver) => {
+            console.log(`R ${routeNo} ${driver.depotId} ${driver.driverName}`);
+
+            routeNo += 1;
+          });
+        })
+        .then(() => { completed(`XXX: ${date} ${depot.depotName} select ${noRoutesToday}/${depot.fleetSize} random drivers`); });
+
+      /*
       for (let routeNo = 1; routeNo <= noRoutesToday; routeNo += 1) {
         console.log(depot.depotName, '-', date, '{', depot.fleetSize, '}', routeNo);
       }
+
+       */
     });
   });
 
-  completed('completed: create routes');
+  //completed('completed: create routes');
 });
 
 a.add(db.connect, { region: 'eu-west-2', dbInstance: 'prod-mysql' });
