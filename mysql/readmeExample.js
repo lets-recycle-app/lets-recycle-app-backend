@@ -1,6 +1,5 @@
-import { asyncList, asyncStore } from './asyncList.js';
 import { dbControl } from './dbControl.js';
-import { showTable } from './dbUtils.js';
+import { dataStore, showTable } from './dbUtils.js';
 
 const createUsers = `
 
@@ -22,7 +21,7 @@ values
 ('Bob', 'Newman', 'Finance');
 `;
 
-const store = asyncStore();
+const store = dataStore();
 const db = dbControl();
 
 (async () => {

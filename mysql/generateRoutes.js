@@ -1,10 +1,9 @@
 import { dbControl } from './dbControl.js';
-import { asyncStore } from './asyncList.js';
 import {
-  getRandomInt, createFutureDates, createRouteForDepotDrivers,
+  getRandomInt, dataStore, createFutureDates, createRouteForDepotDrivers,
 } from './dbUtils.js';
 
-const store = asyncStore();
+const store = dataStore();
 const db = dbControl();
 
 const generateRouteSql = (routeList) => {

@@ -13,7 +13,7 @@ npm generateRoutes  // generate routes for all depots and all forward days
 ````
 
 The database utilities rely on running statements in order so therefore use an 
-asynchronous queuing system defined in *asyncList.js* .
+asynchronous queuing system.
 
 To connect to the MySQL database, first create an 'AWS Secret' with a key name that matches the database instance name.
 Set the secret value to be a json object with connection settings as shown in the example below.
@@ -26,37 +26,37 @@ Set the secret value to be a json object with connection settings as shown in th
 }
 ```
 
-Prior to executing any SQL statements, initialise dbControl() and asyncList() 
+Prior to executing any SQL statements, initialise dbControl() 
 and connect with the correct AWS region and MySQL instance name e.g.
 
 ```javascript
 const db = dbControl();
-const a = asyncList();
-
-a.add(db.connect, { region: 'eu-west-2', dbInstance: 'prod-mysql' });
+await db.connect({ store, region: 'eu-west-2', dbInstance: 'prod-mysql' });
 ```
 
-Add SQL statement text in the order of execution required to a single threaded processing queue with db.add(). 
-Execute the SQL queue by calling db.run() e.g.
+Execute SQL statement text in the order of execution required by calling db.sql() e.g.
+
 ```javascript
 
-db.add('show tables');
-db.add(clearUsers);
+const store = dataStore();
+const db = dbControl();
 
-db.run().then(() => {
-  console.log('Installation completed.');
-});
+(async () => {
+  await db.connect({ store, region: 'eu-west-2', dbInstance: 'prod-mysql' });
+  await db.sql(createUsers);
+  await db.sql('select * from users;', 'users')
+    .then(() => { db.close(); });
+
+  showTable(store.get('users')[0]);
+})();
 ```
-
-The asynchronous queues can be infinitely nested using sub-queues. 
 
 Multiple SQL statements can be defined in a single string variable. 
 The sql statements will be executed asynchronously in order e.g.
 
 ```javascript
-import { asyncList } from './asyncList.js';
 import { dbControl } from './dbControl.js';
-import { showTable } from './dbUtils.js';
+import { dataStore, showTable } from './dbUtils.js';
 
 const createUsers = `
 
@@ -78,19 +78,20 @@ values
 ('Bob', 'Newman', 'Finance');
 `;
 
+const store = dataStore();
 const db = dbControl();
-const a = asyncList();
 
-a.add(db.connect, { region: 'eu-west-2', dbInstance: 'prod-mysql' });
-a.add(db.sql, { sql: createUsers });
-a.add(db.sql, { sql: 'select * from users;', id: 'users' });
+(async () => {
+  await db.connect({ store, region: 'eu-west-2', dbInstance: 'prod-mysql' });
+  await db.sql(createUsers);
+  await db.sql('select * from users;', 'users')
+    .then(() => { db.close(); });
 
-a.run().then(() => {
-  db.close();
-  showTable(a.fetch('users'));
+  showTable(store.get('users')[0]);
   console.log('#####\n');
-  console.log(a.fetch('users'));
-});
+  console.log(store.get('users')[0]);
+})();
+
 ```
 The above SQL queue will execute with the following output:
 ```javascript

@@ -1,6 +1,5 @@
 import { dbControl } from './dbControl.js';
-import { getRandomInt, createFakeUser } from './dbUtils.js';
-import { asyncStore } from './asyncList.js';
+import { getRandomInt, dataStore, createFakeUser } from './dbUtils.js';
 
 const createDepotsData = `
 
@@ -60,7 +59,7 @@ const createDriversData = (db, depotArray) => new Promise((completed) => {
 
 export const createCoreData = () => new Promise((completed) => {
   (async () => {
-    const store = asyncStore();
+    const store = dataStore();
     const db = dbControl();
     await db.connect({ store, region: 'eu-west-2', dbInstance: 'prod-mysql' });
     await db.sql('delete from depots');

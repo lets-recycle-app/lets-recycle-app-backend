@@ -1,5 +1,5 @@
 import { dbControl } from './dbControl.js';
-import { asyncStore } from './asyncList.js';
+import { dataStore } from './dbUtils.js';
 
 import { createUsers, createCollRequest } from './databaseLegacyTables.js';
 import {
@@ -7,7 +7,7 @@ import {
 } from './databaseTables.js';
 import { createCoreData } from './databaseCoreData.js';
 
-const store = asyncStore();
+const store = dataStore();
 const db = dbControl();
 
 // add sql statement text to an asynchronous

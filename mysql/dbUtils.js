@@ -29,6 +29,24 @@ export const createFakeUser = () => {
   return userDetails;
 };
 
+export const dataStore = () => {
+  const storeObject = {};
+
+  return {
+    get: (key) => storeObject[key],
+    put: (key, data) => {
+      if (storeObject[key]) {
+        storeObject[key].push(data);
+      } else {
+        storeObject[key] = [data];
+      }
+    },
+    wipe: (key) => delete storeObject[key],
+    getAll: () => storeObject,
+    getKeys: () => Object.keys(storeObject),
+  };
+};
+
 export const showTable = (rowData) => {
   if (rowData.length > 0) {
     let screenOutput = '';
