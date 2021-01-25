@@ -87,9 +87,10 @@ export const createFutureDates = async (noDaysForward = 7) => {
 export const createRouteForDepotDrivers = (date, depot, driverList) => {
   const routeList = [];
   const noStops = getRandomInt(15, 27);
+  const itemArray = ['fridge', 'freezer', 'washer', 'dryer', 'oven', 'cooker', 'dishwasher'];
 
   driverList.forEach((singleDriver) => {
-    for (let seqNo = 1; seqNo <= noStops; seqNo += 1) {
+    for (let seqNo = 0; seqNo <= noStops; seqNo += 1) {
       const routeDetails = {
         routeDate: date,
         depotName: depot.depotName,
@@ -98,11 +99,13 @@ export const createRouteForDepotDrivers = (date, depot, driverList) => {
         driverName: singleDriver.driverName,
         driverId: singleDriver.driverId,
         addressId: 222,
+        addressPostCode: depot.postCode,
         routeSeqNo: seqNo,
-        routeAction: 'delivery',
-        itemType: 'fridge',
+        routeAction: seqNo === 0 ? 'depot' : 'delivery',
+        itemType: seqNo === 0 ? 'depot' : itemArray[getRandomInt(0, itemArray.length - 1)],
         status: 'pending',
-        refNo: 'AHJSK123',
+
+        refNo: `D${depot.depotId.toString().padStart(2, '0')}R${singleDriver.driverId.toString().padStart(2, '0')}S${seqNo.toString().padStart(2, '0')}T${date.slice(-2)}`,
       };
 
       routeList.push(routeDetails);

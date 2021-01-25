@@ -11,12 +11,12 @@ const generateRouteSql = (routeList) => {
 
   if (routeList) {
     sqlText += 'insert into routes '
-    + '(depotId, driverId, routeDate, addressId, '
+    + '(depotId, driverId, routeDate, addressId, addressPostCode,'
     + 'routeSeqNo, routeAction, itemType, status, refNo) values ';
 
     routeList.forEach((route) => {
     // console.log('Create Route', date, ' ', depot.depotName, ' ', driver.driverName, route.routeSeqNo);
-      sqlText += `( ${route.depotId}, ${route.driverId}, '${route.routeDate}',  ${route.addressId},`;
+      sqlText += `( ${route.depotId}, ${route.driverId}, '${route.routeDate}', ${route.addressId}, '${route.addressPostCode}', `;
       sqlText += `${route.routeSeqNo}, '${route.routeAction}', '${route.itemType}',`;
       sqlText += `'${route.status}', '${route.refNo}' ),`;
     });

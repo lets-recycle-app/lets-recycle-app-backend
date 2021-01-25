@@ -7,6 +7,7 @@ create table routes (
     routeDate date not null,                /* route date */
     routeSeqNo int not null,                /* delivery or recycle seq no. in route 1,2,3,... */
     addressId int not null,                 /* address Id from table addresses */
+    addressPostCode varchar(10) not null,   /* address postcode */
     routeAction varchar(10) not null,       /* deliver or recycle */
     itemType varchar(30) not null,          /* fridge, freezer etc. */
     status varchar(10) not null,            /* pending, completed, failed */
