@@ -1,6 +1,6 @@
-import { asyncList } from './asyncList.js';
 import { dbControl } from './dbControl.js';
 import { getRandomInt, createFakeUser } from './dbUtils.js';
+import { asyncStore } from './asyncList.js';
 
 const createDepotsData = `
 
@@ -30,9 +30,7 @@ values
 ('York', 'YO10 3FQ', 9);
 `;
 
-const createDriversData = (data) => new Promise((completed) => {
-  const depotArray = data.a.fetch('depots');
-
+const createDriversData = (db, depotArray) => new Promise((completed) => {
   // for each depot create a total of depot.fleetSize new drivers
 
   let sqlDrivers = '';
@@ -52,32 +50,30 @@ const createDriversData = (data) => new Promise((completed) => {
     sqlDrivers += ';';
   }
 
-  // run using the same database
-  // connection as the main thread
-
-  const a = asyncList(data.procOutput);
-
   if (sqlDrivers) {
-    a.add(data.db.sql, { sql: sqlDrivers });
+    db.sql(sqlDrivers)
+      .then(() => { completed('completed: create random drivers'); });
+  } else {
+    completed('warning: no random drivers added.');
   }
-
-  a.run()
-    .then(() => { completed('completed: create random drivers'); });
 });
 
 export const createCoreData = () => new Promise((completed) => {
-  const a = asyncList();
-  const db = dbControl();
-  a.add(db.connect, { region: 'eu-west-2', dbInstance: 'prod-mysql' });
-  a.add(db.sql, { sql: 'delete from depots' });
-  a.add(db.sql, { sql: createDepotsData });
-  a.add(db.sql, { sql: 'select * from depots', id: 'depots' });
-  a.add(createDriversData, { db, a });
-  a.run()
-    .then(() => { db.close(); completed('core data installation completed'); });
+  (async () => {
+    const store = asyncStore();
+    const db = dbControl();
+    await db.connect({ store, region: 'eu-west-2', dbInstance: 'prod-mysql' });
+    await db.sql('delete from depots');
+    await db.sql(createDepotsData);
+    await db.sql('select * from depots', 'depots');
+
+    await createDriversData(db, store.get('depots')[0])
+      .then(() => {
+        db.close();
+        console.log('core data installation completed');
+        completed(null);
+      });
+  })();
 });
 
-/*
-createCoreData()
-  .then(() => { console.log('core data installation completed'); });
-*/
+// createCoreData();

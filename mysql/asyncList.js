@@ -1,6 +1,24 @@
+export const asyncStore = () => {
+  const storeObject = {};
+
+  return {
+    get: (key) => storeObject[key],
+    put: (key, data) => {
+      if (storeObject[key]) {
+        storeObject[key].push(data);
+      } else {
+        storeObject[key] = [data];
+      }
+    },
+    wipe: (key) => delete storeObject[key],
+    getAll: () => storeObject,
+    getKeys: () => Object.keys(storeObject),
+  };
+};
+
 export const asyncList = (previousStore = null) => {
   const procList = [];
-  const showLog = true;
+  const showLog = false;
 
   const dataStore = () => {
     const dataObject = {};

@@ -1,4 +1,4 @@
-import { asyncList } from './asyncList.js';
+import { asyncList, asyncStore } from './asyncList.js';
 import { dbControl } from './dbControl.js';
 import { showTable } from './dbUtils.js';
 
@@ -22,16 +22,16 @@ values
 ('Bob', 'Newman', 'Finance');
 `;
 
+const store = asyncStore();
 const db = dbControl();
-const a = asyncList();
 
-a.add(db.connect, { region: 'eu-west-2', dbInstance: 'prod-mysql' });
-a.add(db.sql, { sql: createUsers });
-a.add(db.sql, { sql: 'select * from users;', id: 'users' });
+(async () => {
+  await db.connect({ store, region: 'eu-west-2', dbInstance: 'prod-mysql' });
+  await db.sql(createUsers);
+  await db.sql('select * from users;', 'users')
+    .then(() => { db.close(); });
 
-a.run().then(() => {
-  db.close();
-  showTable(a.fetch('users'));
+  showTable(store.get('users')[0]);
   console.log('#####\n');
-  console.log(a.fetch('users'));
-});
+  console.log(store.get('users')[0]);
+})();
