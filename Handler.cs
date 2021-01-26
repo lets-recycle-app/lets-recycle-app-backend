@@ -1,84 +1,135 @@
-using System.Collections;
-using Amazon.Lambda.Core;
+using System;
 using System.Collections.Generic;
-using Amazon.Lambda.APIGatewayEvents;
+using System.Globalization;
 using System.Text.Json;
-using System.Text.Json.Serialization;
+using Amazon.Lambda.APIGatewayEvents;
+using Amazon.Lambda.Core;
+using Amazon.Lambda.Serialization.SystemTextJson;
+using MySql.Data.MySqlClient;
 
-[assembly:LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
+[assembly: LambdaSerializer(typeof(DefaultLambdaJsonSerializer))]
+
 namespace AwsDotnetCsharp
 {
     public class Handler
     {
-        
-       public APIGatewayProxyResponse GetData(APIGatewayProxyRequest request)
-       {
-           string userId = request.PathParameters["userId"];
-           ArrayList dataList = new ArrayList();
+        public APIGatewayProxyResponse GetData(APIGatewayProxyRequest request)
+        {
+            //var userId = request.PathParameters["userId"];
 
-           if (userId == "dan")
-           {
-               Info t1 = new Info("GR-1001", "Visit Greece", false);
-               dataList.Add(t1);
-           }
-           else
-           {
-               Info t1 = new Info("UK-1001", "Visit Manchester", false);
-               Info t2 = new Info("UK-1002", "Visit London", false);
-               Info t3 = new Info("UK-1003", "Visit Liverpool", false);
-               
-               dataList.Add(t1);
-               dataList.Add(t2);
-               dataList.Add(t3);
-           }
-           
-           //LambdaLogger.Log("Getting Data For " +userId);
-           
-           return new APIGatewayProxyResponse
-           {
-                Headers = new Dictionary<string, string>
-                { 
-                    { "Content-Type", "application/json" }, 
-                    { "Access-Control-Allow-Origin", "*" } 
-                },
-                Body = JsonSerializer.Serialize(dataList),
-                StatusCode = 200
-           };
-       }
-       
-       public APIGatewayProxyResponse SaveData(APIGatewayProxyRequest request)
-       {
-           
-           Info info = JsonSerializer.Deserialize<Info>(request.Body);
-           
-           return new APIGatewayProxyResponse
-           {
-               Headers = new Dictionary<string, string>
-               { 
-                   { "Content-Type", "application/json" }, 
-                   { "Access-Control-Allow-Origin", "*" } 
-               },
-               Body = info.Description,
-               StatusCode = 200
-           };
-       }
-    }
 
-    public class Info
-    {
-        public string DataId { get; set; }
-        public string Description { get; set; }
-        public bool Completion { get; set; }
-        
-        public Info() {
+            var server = Environment.GetEnvironmentVariable("DATABASE_INSTANCE");
+            var port = Environment.GetEnvironmentVariable("DATABASE_PORT");
+            var database = Environment.GetEnvironmentVariable("DATABASE_NAME");
+            var user = Environment.GetEnvironmentVariable("DATABASE_USER");
+            var password = Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
             
+
+            var connectionString = string.Format(
+                "server={0}; port={1}; database={2}; user={3}; password={4}",
+                server, port, database, user, password);
+
+            MySqlConnection db=null;
+            
+            var errorMessage = "";
+            bool errorStatus = false;
+            int statusCode = 200;
+            var dataList = new List<Info>();
+            
+
+            try
+            {
+                
+                db = new MySqlConnection(connectionString);
+
+                try
+                {
+                    db.Open();
+                }
+                catch (Exception error)
+                {
+                    errorMessage = $"failed MySQL Open: ${error}";
+                    errorStatus = true;
+                    statusCode = 520;
+                }
+                
+            }
+            catch (Exception error)
+            {
+                errorMessage = $"failed MySQLConnection: ${error}";
+                errorStatus = true;
+                statusCode = 521;
+            }
+
+
+            if (!errorStatus)
+            {
+                try
+                {
+                    // Perform database operations
+
+                    var sql = "select depotName, postCode, fleetSize FROM depots";
+                    var cmd = new MySqlCommand(sql, db);
+                    var rdr = cmd.ExecuteReader();
+
+                    while (rdr.Read())
+                        dataList.Add(new Info(
+                            rdr.GetString("depotName"),
+                            rdr.GetString("postCode"),
+                            rdr.GetInt32("fleetSize")
+                        ));
+
+                    rdr.Close();
+                    db.Close();
+                }
+                catch (Exception error)
+                {
+                    errorStatus = true;
+                    errorMessage = $"SQL error {error}";
+                    statusCode = 522;
+                }
+                
+            }
+
+            string body="";
+            
+            if (errorStatus)
+            {
+                LambdaLogger.Log($"===> ${errorMessage}");
+                body = "{}";
+            }
+            else
+            {
+                body = JsonSerializer.Serialize(dataList);
+            }
+            
+            return new APIGatewayProxyResponse
+            {
+                
+                Body = body,
+                Headers = new Dictionary<string, string>
+                {
+                    {"Content-Type", "application/json"},
+                    {"Access-Control-Allow-Origin", "*"}
+                },
+                StatusCode = statusCode
+            };
         }
 
-        public Info(string _dataId, string _description, bool _completion)
+        public APIGatewayProxyResponse SaveData(APIGatewayProxyRequest request)
         {
-            DataId = _dataId;
-            Description = _description;
-            Completion = _completion;
+            var info = JsonSerializer.Deserialize<Info>(request.Body);
+
+            return new APIGatewayProxyResponse
+            {
+                Headers = new Dictionary<string, string>
+                {
+                    {"Content-Type", "application/json"},
+                    {"Access-Control-Allow-Origin", "*"}
+                },
+                Body = info.DepotName,
+                StatusCode = 200
+            };
         }
     }
 }
