@@ -7,11 +7,13 @@
     "mysql": "^2.18.1",
     "aws-sdk": "^2.828.0",
     "faker": "^5.1.0",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "node-postcodes.io": "^1.0.2"
   },
   "scripts": {
     "start": "node --no-warnings mysql/databaseSetup.js",
     "databaseSetup": "node --no-warnings mysql/databaseSetup.js",
+    "generateRoutes": "node --no-warnings mysql/generateRoutes.js",
     "eslint": "eslint --fix ./"
   },
   "devDependencies": {

@@ -3,7 +3,7 @@ import { dataStore } from './dbUtils.js';
 
 import { createUsers, createCollRequest } from './databaseLegacyTables.js';
 import {
-  createRoutes, createDepots, createDrivers, createAdmins, createAddresses,
+  createRoutes, createDepots, createDrivers, createAdmins, createAddresses, createPostCodes,
 } from './databaseTables.js';
 import { createCoreData } from './databaseCoreData.js';
 
@@ -23,6 +23,7 @@ const db = dbControl();
   await db.sql(createDrivers);
   await db.sql(createAdmins);
   await db.sql(createAddresses);
+  await db.sql(createPostCodes);
 
   await createCoreData()
     .then(() => {

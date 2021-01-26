@@ -7,7 +7,7 @@ create table routes (
     routeDate date not null,                /* route date */
     routeSeqNo int not null,                /* delivery or recycle seq no. in route 1,2,3,... */
     addressId int not null,                 /* address Id from table addresses */
-    addressPostCode varchar(10) not null,   /* address postcode */
+    addressPostCode varchar(8) not null,    /* address postcode */
     routeAction varchar(10) not null,       /* deliver or recycle */
     itemType varchar(30) not null,          /* fridge, freezer etc. */
     status varchar(10) not null,            /* pending, completed, failed */
@@ -23,7 +23,7 @@ drop table if exists depots;
 create table depots (
   depotId int not null auto_increment,      /* depotId auto created */
   depotName varchar(50) not null,           /* depot town name */   
-  postCode varchar(10) not null,            /* depot post code */
+  postCode varchar(8) not null,             /* depot post code */
   fleetSize int not null,                   /* number of drivers attached to depot */
   primary key (depotId)
 );
@@ -66,7 +66,7 @@ drop table if exists addresses;
 
 create table addresses (
     addressId int not null auto_increment,  /* driverId auto created */
-    postcode varchar(10) not null,          /* a valid postcode */
+    postcode varchar(8) not null,          /* a valid postcode */
     customerName varchar(50) not null,      /* free format customer name */
     customerEmail varchar(100) not null,    /* customer email address */
     locationType varchar(10) not null,      /* "private" or "public" address type */  
@@ -79,4 +79,18 @@ create table addresses (
 );
 
 alter table addresses auto_increment=1;
+`;
+
+export const createPostCodes = `
+drop table if exists postcodes;
+
+create table postcodes (
+  postcodeId int not null auto_increment,   /* postcodeId auto created */
+  postcode varchar(8) not null,             /* a uk valid postcode */
+  latitude  decimal(12,9) not null,           /* latitude associated with the postcode */
+  longitude decimal(12,9) not null,         /* longitude associated with the postcode */
+  primary key (postcodeId)
+);
+
+alter table postcodes auto_increment=1;
 `;
