@@ -11,26 +11,22 @@ provider:
 package:
   individually: true
 
+custom:
+  awsSecret: ${ssm:/aws/reference/secretsmanager/dev-mysql~true}
+
 functions:
-  get-data:
-    handler: CsharpHandlers::AwsDotnetCsharp.Handler::GetData
-
-    # you can add packaging information here
+ 
+  depots:
+    environment:
+      RDS_ENDPOINT: ${self:custom.awsSecret.endpoint}
+      RDS_PORT: ${self:custom.awsSecret.port}
+      RDS_DATABASE: ${self:custom.awsSecret.database}
+      RDS_USER: ${self:custom.awsSecret.user}
+      RDS_PASSWORD: ${self:custom.awsSecret.password}
+    handler: CsharpHandlers::Lambdas.RDS::depots
     package:
-      artifact: bin/Release/netcoreapp3.1/data-api.zip
+      artifact: bin/Release/netcoreapp3.1/depots.zip
     events:
       - httpApi:
-          path: /users/{userId}/data
+          path: /depots
           method: get
-          
-  save-data:
-    handler: CsharpHandlers::AwsDotnetCsharp.Handler::SaveData
-
-    # you can add packaging information here
-    package:
-      artifact: bin/Release/netcoreapp3.1/data-api.zip
-    events:
-      - httpApi:
-          path: /users/{userId}/data
-          method: post
-            

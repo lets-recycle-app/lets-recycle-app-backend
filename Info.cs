@@ -1,4 +1,4 @@
-﻿namespace AwsDotnetCsharp
+﻿namespace Lambdas
 {
     public class Info
     {

@@ -1,0 +1,40 @@
+﻿AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Sample SAM Template for LR1
+
+Globals:
+  Function:
+    Timeout: 10
+
+Resources:
+  LR1Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      # Handler: AwsDotnetCsharp::GetData::FunctionHandler
+      Handler: GetData
+      Runtime: dotnetcore3.1
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          PARAM1: VALUE
+      Events:
+        GetData:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /dan/data
+            Method: get
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  LR1Api:
+    Description: "API Gateway endpoint URL for Prod stage for GetData function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/lr1/"
+  LR1Function:
+    Description: "LR1 Lambda Function ARN"
+    Value: !GetAtt LR1Function.Arn
+  LR1FunctionIamRole:
+    Description: "Implicit IAM Role created for LR1 function"
+    Value: !GetAtt LR1FunctionRole.Arn

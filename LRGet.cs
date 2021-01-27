@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text.Json;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
@@ -9,37 +8,35 @@ using MySql.Data.MySqlClient;
 
 [assembly: LambdaSerializer(typeof(DefaultLambdaJsonSerializer))]
 
-namespace AwsDotnetCsharp
+namespace Lambdas
 {
-    public class Handler
+    public class RDS
     {
-        public APIGatewayProxyResponse GetData(APIGatewayProxyRequest request)
+        public APIGatewayProxyResponse depots(APIGatewayProxyRequest request)
         {
             //var userId = request.PathParameters["userId"];
-
-
-            var server = Environment.GetEnvironmentVariable("DATABASE_INSTANCE");
-            var port = Environment.GetEnvironmentVariable("DATABASE_PORT");
-            var database = Environment.GetEnvironmentVariable("DATABASE_NAME");
-            var user = Environment.GetEnvironmentVariable("DATABASE_USER");
-            var password = Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
             
 
-            var connectionString = string.Format(
-                "server={0}; port={1}; database={2}; user={3}; password={4}",
-                server, port, database, user, password);
+            var endpoint = Environment.GetEnvironmentVariable("RDS_ENDPOINT");
+            var port = Environment.GetEnvironmentVariable("RDS_PORT");
+            var database = Environment.GetEnvironmentVariable("RDS_DATABASE");
+            var user = Environment.GetEnvironmentVariable("RDS_USER");
+            var password = Environment.GetEnvironmentVariable("RDS_PASSWORD");
 
-            MySqlConnection db=null;
-            
+
+            var connectionString =
+                $"server={endpoint}; port={port}; database={database}; user={user}; password={password}";
+
+            MySqlConnection db = null;
+
             var errorMessage = "";
-            bool errorStatus = false;
-            int statusCode = 200;
+            var errorStatus = false;
+            var statusCode = 200;
             var dataList = new List<Info>();
-            
+
 
             try
             {
-                
                 db = new MySqlConnection(connectionString);
 
                 try
@@ -52,7 +49,6 @@ namespace AwsDotnetCsharp
                     errorStatus = true;
                     statusCode = 520;
                 }
-                
             }
             catch (Exception error)
             {
@@ -63,7 +59,6 @@ namespace AwsDotnetCsharp
 
 
             if (!errorStatus)
-            {
                 try
                 {
                     // Perform database operations
@@ -88,11 +83,9 @@ namespace AwsDotnetCsharp
                     errorMessage = $"SQL error {error}";
                     statusCode = 522;
                 }
-                
-            }
 
-            string body="";
-            
+            var body = "";
+
             if (errorStatus)
             {
                 LambdaLogger.Log($"===> ${errorMessage}");
@@ -102,10 +95,9 @@ namespace AwsDotnetCsharp
             {
                 body = JsonSerializer.Serialize(dataList);
             }
-            
+
             return new APIGatewayProxyResponse
             {
-                
                 Body = body,
                 Headers = new Dictionary<string, string>
                 {
@@ -116,9 +108,11 @@ namespace AwsDotnetCsharp
             };
         }
 
+        /*
         public APIGatewayProxyResponse SaveData(APIGatewayProxyRequest request)
         {
-            var info = JsonSerializer.Deserialize<Info>(request.Body);
+            //var info = JsonSerializer.Deserialize<Info>(request.Body);
+            string info = request.Body.ToString();
 
             return new APIGatewayProxyResponse
             {
@@ -127,9 +121,10 @@ namespace AwsDotnetCsharp
                     {"Content-Type", "application/json"},
                     {"Access-Control-Allow-Origin", "*"}
                 },
-                Body = info.DepotName,
+                Body = info,
                 StatusCode = 200
             };
         }
+        */
     }
 }
