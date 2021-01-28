@@ -2,8 +2,8 @@ using System.Collections.Generic;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.SystemTextJson;
-using Newtonsoft.Json;
 using DatabaseFunctions;
+using Newtonsoft.Json;
 
 [assembly: LambdaSerializer(typeof(DefaultLambdaJsonSerializer))]
 
