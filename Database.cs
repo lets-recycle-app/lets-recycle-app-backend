@@ -6,21 +6,21 @@ namespace Lambdas
 {
     public class Database
     {
-        public List<Depots> mySqlReturnData = new List<Depots>();
-        public string mySqlErrorMessage;
-        public bool mySqlExecuteStatus;
         private readonly string connectionString;
         private MySqlConnection mySqlConnection;
-        
+
         private bool mySqlConnectionStatus;
-        
+        public string mySqlErrorMessage;
+        public bool mySqlExecuteStatus;
+        public List<Depots> mySqlReturnData = new List<Depots>();
+
 
         public Database()
         {
             mySqlConnection = null;
             mySqlErrorMessage = "";
             mySqlConnectionStatus = false;
-            mySqlExecuteStatus=false;
+            mySqlExecuteStatus = false;
 
             string database = Environment.GetEnvironmentVariable("RDS_DATABASE");
             string endpoint = Environment.GetEnvironmentVariable("RDS_ENDPOINT");
@@ -58,19 +58,16 @@ namespace Lambdas
 
         public bool execute(string sqlText)
         {
-            
-            
-            mySqlExecuteStatus=true;
-            
+            mySqlExecuteStatus = true;
+
             try
             {
-                
                 MySqlCommand sqlCommand = new MySqlCommand(sqlText, mySqlConnection);
                 MySqlDataReader reader = sqlCommand.ExecuteReader();
 
 
                 while (reader.Read())
-                        
+
                     mySqlReturnData.Add(new Depots(
                         reader.GetInt32("depotId"),
                         reader.GetString("depotName"),
@@ -78,14 +75,12 @@ namespace Lambdas
                         reader.GetInt32("fleetSize")
                     ));
 
-                mySqlExecuteStatus=true;
-                
+                mySqlExecuteStatus = true;
+
                 reader.Close();
-                
             }
             catch (Exception error)
             {
-                
                 mySqlErrorMessage = $"SQL Error: ${error}";
 
                 return false;
@@ -96,10 +91,7 @@ namespace Lambdas
 
         public void close()
         {
-            if (mySqlConnectionStatus && mySqlConnection != null)
-            {
-                mySqlConnection.Close();
-            }
+            if (mySqlConnectionStatus && mySqlConnection != null) mySqlConnection.Close();
         }
     }
 }
