@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ContentModelStore">
+    <e p="C:\Users\danir\AppData\Local\JetBrains\Rider2020.2\extResources" t="IncludeRecursive" />
+    <e p="C:\Users\danir\AppData\Local\JetBrains\Transient\Rider\v202\SolutionCaches\_app.275737872.00" t="ExcludeRecursive" />
+    <e p="M:\Dan\OneDrive\Documents\@Coding\AWS\lets-recycle-app-backend\app" t="IncludeFlat">
+      <e p="app.sln" t="IncludeFlat" />
+      <e p="DatabaseFunctions" t="IncludeRecursive">
+        <e p="DatabaseFunctions.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="DatabaseTest" t="IncludeRecursive">
+        <e p="DatabaseTest.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="LambdaFunctions" t="IncludeRecursive">
+        <e p=".gitignore" t="Include" />
+        <e p="aws-lambda-tools-defaults.json" t="Include" />
+        <e p="AWSLambda.cs" t="Include" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="build.cmd" t="Include" />
+        <e p="LambdaFunctions.csproj" t="IncludeRecursive" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="netcoreapp3.1" t="Include">
+              <e p="LambdaFunctions.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="serverless.yml" t="Include" />
+      </e>
+      <e p="packages" t="ExcludeRecursive" />
+    </e>
+  </component>
+</project>
