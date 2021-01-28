@@ -1,4 +1,4 @@
-#Let's Recycle AWS Installation Notes#
+# Let's Recycle AWS Installation Notes
 
 The Let's Recycle project app utilises a MySQL database hosted on AWS RDS.
 React components interact with the database using AWS Lambda endpoints.
