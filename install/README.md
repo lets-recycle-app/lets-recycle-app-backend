@@ -105,5 +105,4 @@ The above SQL queue will execute with the following output:
     { id: 2, forename: 'Bob', surname: 'Newman', department: 'Finance' }
   ]
 ```
-
-End.
+End
