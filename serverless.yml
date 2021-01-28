@@ -1,0 +1,32 @@
+service: lets-recycle-app-lambda
+frameworkVersion: '2'
+
+provider:
+  name: aws
+  runtime: dotnetcore3.1
+  lambdaHashingVersion: 20201221
+  region: eu-west-2
+  profile: serverless
+
+package:
+  individually: true
+
+custom:
+  awsSecret: ${ssm:/aws/reference/secretsmanager/dev-mysql~true}
+
+functions:
+ 
+  depots:
+    environment:
+      RDS_ENDPOINT: ${self:custom.awsSecret.endpoint}
+      RDS_PORT: ${self:custom.awsSecret.port}
+      RDS_DATABASE: ${self:custom.awsSecret.database}
+      RDS_USER: ${self:custom.awsSecret.user}
+      RDS_PASSWORD: ${self:custom.awsSecret.password}
+    handler: CsharpHandlers::Lambdas.RDS::depots
+    package:
+      artifact: bin/Release/netcoreapp3.1/depots.zip
+    events:
+      - httpApi:
+          path: /depots
+          method: get

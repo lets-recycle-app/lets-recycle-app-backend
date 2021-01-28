@@ -1,0 +1,11 @@
+﻿{
+  "profile": "default",
+  "region": "eu-west-2",
+  "configuration": "Release",
+  "framework": "netcoreapp3.1",
+  "output-package": "./bin/Release/netcoreapp3.1/depots.zip",
+  "function-runtime": "dotnetcore3.1",
+  "function-memory-size": 256,
+  "function-timeout": 30,
+  "function-handler": "Lambdas::Lambdas.RDS::depots"
+}
