@@ -16,7 +16,7 @@ namespace DatabaseFunctions
             {
                 const string sqlText = "select depotId, depotName, postCode, fleetSize from depots";
 
-                if (database.execute(sqlText))
+                if (database.execute(sqlText,"depots"))
                 {
                     body = JsonConvert.SerializeObject(database.mySqlReturnData);
 

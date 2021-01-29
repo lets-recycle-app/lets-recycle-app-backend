@@ -1,13 +1,13 @@
 ﻿namespace DatabaseFunctions
 {
-    public class Depots
+    public class DepotsOld
     {
         public int depotId;
         public string depotName;
         public int fleetSize;
         public string postCode;
 
-        public Depots(int _depotId, string _depotName, string _postCode, int _fleetSize)
+        public DepotsOld(int _depotId, string _depotName, string _postCode, int _fleetSize)
         {
             depotId = _depotId;
             depotName = _depotName;

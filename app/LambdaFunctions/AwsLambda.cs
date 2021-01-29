@@ -1,9 +1,9 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.SystemTextJson;
 using DatabaseFunctions;
-using Newtonsoft.Json;
 
 [assembly: LambdaSerializer(typeof(DefaultLambdaJsonSerializer))]
 
@@ -11,31 +11,64 @@ namespace LambdaFunctions
 {
     public class AwsLambda
     {
-        public APIGatewayProxyResponse depots(APIGatewayProxyRequest request)
+        public APIGatewayProxyResponse Main(APIGatewayProxyRequest request)
         {
-            //var userId = request.PathParameters["userId"];
+            string table = request.PathParameters["table"];
+            string tableId = request.PathParameters["tableId"];
 
             Database database = new Database();
 
+            LambdaLogger.Log($"===> Path=[{request.PathParameters}] Method=[{request}]");
+
             int statusCode = 200;
-            string body = "{}";
+            string body = "";
 
-
-            if (database.connect())
+            string sqlText = "";
+            if (table == "depots")
             {
-                const string sqlText = "select depotId, depotName, postCode, fleetSize from depots";
+                sqlText = "select depotId, depotName, postCode, fleetSize from depots";
 
-                if (database.execute(sqlText))
+                if (tableId != "0")
                 {
-                    body = JsonConvert.SerializeObject(database.mySqlReturnData);
+                    sqlText += $" where depotId = {tableId}";
                 }
-                else
+                
+                
+                if (database.connect())
                 {
-                    LambdaLogger.Log($"===> ${database.mySqlErrorMessage}");
+                    if (database.execute(sqlText, "depots"))
+                    {
+                        body = database.mySqlReturnData;
+                    }
+                    else
+                    {
+                        LambdaLogger.Log($"===> ${database.mySqlErrorMessage}");
+                    }
                 }
             }
+            else if (table == "drivers")
+            {
+                sqlText = "select driverId, depotId, driverName, truckSize, userName, apiKey from drivers";
+                if (tableId != "0")
+                {
+                    sqlText += $" where driverId = {tableId}";
+                }
 
+                if (database.connect())
+                {
+                    if (database.execute(sqlText, "drivers"))
+                    {
+                        body = database.mySqlReturnData;
+                    }
+                    else
+                    {
+                        LambdaLogger.Log($"===> ${database.mySqlErrorMessage}");
+                    }
+                }
+            }
+            
             database.close();
+
 
             return new APIGatewayProxyResponse
             {
@@ -49,6 +82,7 @@ namespace LambdaFunctions
             };
         }
 
+        CallConvThiscall;
         /*
         public APIGatewayProxyResponse SaveData(APIGatewayProxyRequest request)
         {
