@@ -69,7 +69,7 @@ namespace LambdaFunctions
             
             database.close();
 
-
+            
             return new APIGatewayProxyResponse
             {
                 Body = body,
@@ -81,8 +81,7 @@ namespace LambdaFunctions
                 StatusCode = statusCode
             };
         }
-
-        CallConvThiscall;
+        
         /*
         public APIGatewayProxyResponse SaveData(APIGatewayProxyRequest request)
         {

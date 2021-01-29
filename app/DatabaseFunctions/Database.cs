@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Dynamic;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 
@@ -66,12 +68,54 @@ namespace DatabaseFunctions
             
             if (table == "depots")
             {
-                List<Depots> dataList = new List<Depots>();
+                MySqlCommand sqlCommand = new MySqlCommand(sqlText, mySqlConnection);
+                MySqlDataReader reader = sqlCommand.ExecuteReader();
+
+                try
+                {
+                    List<dynamic> Select(string sql)
+                    {
+                        var list = new List<dynamic>();
+
+                        while (reader.Read())
+                        {
+                            var obj = new ExpandoObject();
+                            var d = obj as IDictionary<String, object>;
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                if (reader.GetFieldType(i) == typeof(int))
+                                {
+                                    d[reader.GetName(i)] = reader.GetInt32(i);
+                                }
+                                else
+                                {
+                                    d[reader.GetName(i)] = reader.GetString(i);    
+                                }
+                                
+                            }
+
+                            list.Add(obj);
+                        }
+
+                        Console.WriteLine(JsonConvert.SerializeObject(list,Formatting.Indented));
+                        return list;
+                    }
+
+                    mySqlReturnData=JsonConvert.SerializeObject(Select(sqlText),Formatting.Indented);
+                }
+                catch (Exception error)
+                {
+                    mySqlErrorMessage = $"SQL Error: ${error}";
+
+                    return false;
+                }
+                /*
                 try
                 {
                     MySqlCommand sqlCommand = new MySqlCommand(sqlText, mySqlConnection);
                     MySqlDataReader reader = sqlCommand.ExecuteReader();
 
+                    List<Depots> dataList = new List<Depots>();
                     while (reader.Read())
                     {
                         
@@ -86,8 +130,9 @@ namespace DatabaseFunctions
                     }
 
                     reader.Close();
+                    
                     mySqlExecuteStatus = true;
-                    mySqlReturnData=JsonConvert.SerializeObject(dataList);
+                    mySqlReturnData=JsonConvert.SerializeObject(dataList,Formatting.Indented);
                     
                     return mySqlExecuteStatus;
                 }
@@ -97,6 +142,7 @@ namespace DatabaseFunctions
 
                     return false;
                 }
+                */
             }
             
             if (table == "drivers")
