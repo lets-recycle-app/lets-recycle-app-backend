@@ -7,29 +7,18 @@ namespace DatabaseFunctions
     {
         public Response()
         {
-            Body = "X";
+            Body = "";
             StatusCode = 500;
-            Headers = new Dictionary<string, string>
+
+            Headers = JsonConvert.SerializeObject(new Dictionary<string, string>
             {
                 {"Content-Type", "application/json"},
                 {"Access-Control-Allow-Origin", "*"}
-            };
-            
+            }, Formatting.Indented);
         }
 
-        public string Body { get; set; }
-        
-        /*
-        public string Body
-        {
-          
-            get => JsonConvert.SerializeObject(Body);
-            set { }
-        }
-        */
-        
-
-        public Dictionary<string, string> Headers { get; set; }
         public int StatusCode { get; set; }
+        public string Body { get; set; }
+        public string Headers { get; }
     }
 }

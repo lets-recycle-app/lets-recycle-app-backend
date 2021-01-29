@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.SystemTextJson;
@@ -32,8 +31,8 @@ namespace LambdaFunctions
                 {
                     sqlText += $" where depotId = {tableId}";
                 }
-                
-                
+
+
                 if (database.connect())
                 {
                     if (database.execute(sqlText, "depots"))
@@ -66,10 +65,10 @@ namespace LambdaFunctions
                     }
                 }
             }
-            
+
             database.close();
 
-            
+
             return new APIGatewayProxyResponse
             {
                 Body = body,
@@ -81,7 +80,7 @@ namespace LambdaFunctions
                 StatusCode = statusCode
             };
         }
-        
+
         /*
         public APIGatewayProxyResponse SaveData(APIGatewayProxyRequest request)
         {

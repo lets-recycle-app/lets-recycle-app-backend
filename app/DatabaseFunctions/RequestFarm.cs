@@ -1,60 +1,79 @@
 ﻿using System;
-using Newtonsoft.Json;
 
 namespace DatabaseFunctions
 {
     public class RequestFarm
     {
-        public RequestFarm(string _requestName, string _requestId)
-        {
-            requestName = _requestName;
-            requestId = _requestId;
+        private Database _database;
 
-            response = new Response();
-            Database database;
+        public RequestFarm(string serviceName, string serviceId)
+        {
+            ServiceName = serviceName;
+            ServiceId = serviceId;
+
+            Response = new Response();
         }
 
-        public string requestName { get; set; }
-        public string requestId { get; set; }
-        public Response response { get; }
-        private Database database;
+        private string ServiceName { get; }
+        private string ServiceId { get; }
+        private Response Response { get; }
 
         public void Process()
         {
             string[] tables = {"depots", "drivers", "admins", "addresses", "routes"};
-            
-            
-            if (Array.Exists(tables, element => element == requestName))
-            {
-                string sqlText = "select depotId, depotName, postCode, fleetSize from depots";
 
-                if (requestId != "0")
+
+            if (Array.Exists(tables, element => element == ServiceName))
+            {
+                //string sqlText = "select depotId, depotName, postCode, fleetSize from depots";
+                string sqlText = "select driverId, depotId, driverName, truckSize, userName, apiKey from drivers";
+
+                if (ServiceId != "0")
                 {
-                    sqlText += $" where depotId = {requestId}";
+                    sqlText += $" where depotId = {ServiceId}";
                 }
-                
-                Console.WriteLine($"Process Sql {sqlText}");
-                database = new Database();
-                
-                if (database.connect())
+
+                _database = new Database();
+
+                if (_database.connect())
                 {
-                    if (database.execute(sqlText, "depots"))
+                    if (_database.execute(sqlText))
                     {
-                        response.Body = database.mySqlReturnData;
+                        Response.Body = _database.mySqlReturnData;
+
+
+                        if (!_database.mySqlConnectionStatus)
+                        {
+                            // failed to connect to the database
+                            Response.StatusCode = 500;
+                        }
+                        else if (_database.mySqlExecuteStatus)
+                        {
+                            // database statement performed successfully
+                            Response.StatusCode = 200;
+                        }
+                        else
+                        {
+                            // connected ok, but the database statement failed
+                            Response.StatusCode = 550;
+                        }
                     }
                 }
+
+                _database.close();
             }
             else
             {
-                Console.WriteLine($"Bad Table {requestName}");
+                // bad service requested - client error
+                Response.StatusCode = 400;
             }
         }
 
-        public void showResponse()
+        public void ShowResponse()
         {
-            Console.WriteLine(JsonConvert.SerializeObject(response.Headers, Formatting.Indented));
-            Console.WriteLine(response.Body);
-            Console.WriteLine(response.StatusCode);
+            Console.WriteLine(Response.Headers);
+            Console.WriteLine(Response.Body);
+            Console.WriteLine(Response.StatusCode);
         }
     }
 }
