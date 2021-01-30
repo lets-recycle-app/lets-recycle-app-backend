@@ -1,22 +1,23 @@
 ﻿using System;
 
-namespace DatabaseFunctions
+namespace Routing
 {
-    public class RequestFarm
+    public class RouteFarm
     {
         private Database _database;
 
-        public RequestFarm(string serviceName, string serviceId)
+        public RouteFarm(string apiRoute)
         {
-            ServiceName = serviceName;
-            ServiceId = serviceId;
+            
+            ServiceName = "serviceName";
+            ServiceId = "serviceId";
 
-            Response = new Response();
+            ResponseJson = new Response();
         }
 
         private string ServiceName { get; }
         private string ServiceId { get; }
-        private Response Response { get; }
+        private Response ResponseJson { get; }
 
         public void Process()
         {
@@ -39,23 +40,23 @@ namespace DatabaseFunctions
                 {
                     if (_database.execute(sqlText))
                     {
-                        Response.Body = _database.mySqlReturnData;
+                        ResponseJson.Body = _database.mySqlReturnData;
 
 
                         if (!_database.mySqlConnectionStatus)
                         {
                             // failed to connect to the database
-                            Response.StatusCode = 500;
+                            ResponseJson.StatusCode = 500;
                         }
                         else if (_database.mySqlExecuteStatus)
                         {
                             // database statement performed successfully
-                            Response.StatusCode = 200;
+                            ResponseJson.StatusCode = 200;
                         }
                         else
                         {
                             // connected ok, but the database statement failed
-                            Response.StatusCode = 550;
+                            ResponseJson.StatusCode = 550;
                         }
                     }
                 }
@@ -65,15 +66,15 @@ namespace DatabaseFunctions
             else
             {
                 // bad service requested - client error
-                Response.StatusCode = 400;
+                ResponseJson.StatusCode = 400;
             }
         }
 
         public void ShowResponse()
         {
-            Console.WriteLine(Response.Headers);
-            Console.WriteLine(Response.Body);
-            Console.WriteLine(Response.StatusCode);
+            Console.WriteLine(ResponseJson.Headers);
+            Console.WriteLine(ResponseJson.Body);
+            Console.WriteLine(ResponseJson.StatusCode);
         }
     }
 }

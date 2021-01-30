@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DatabaseFunctions\DatabaseFunctions.csproj" />
+    <ProjectReference Include="..\Routing\Routing.csproj" />
   </ItemGroup>
 
 </Project>

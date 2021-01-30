@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.SystemTextJson;
-using DatabaseFunctions;
+using Routing;
 
 [assembly: LambdaSerializer(typeof(DefaultLambdaJsonSerializer))]
 
@@ -14,6 +14,7 @@ namespace LambdaFunctions
         {
             string table = request.PathParameters["table"];
             string tableId = request.PathParameters["tableId"];
+            
 
             Database database = new Database();
 

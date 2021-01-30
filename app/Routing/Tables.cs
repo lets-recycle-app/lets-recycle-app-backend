@@ -1,4 +1,4 @@
-﻿namespace DatabaseFunctions
+﻿namespace Routing
 {
     public class Depots
     {

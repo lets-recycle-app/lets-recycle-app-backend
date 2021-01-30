@@ -4,7 +4,7 @@ using System.Dynamic;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 
-namespace DatabaseFunctions
+namespace Routing
 {
     public class Database
     {
