@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 
 namespace Routing
@@ -19,6 +20,13 @@ namespace Routing
 
         public int StatusCode { get; set; }
         public string Body { get; set; }
-        public string Headers { get; }
+        private string Headers { get; }
+
+        public void Show()
+        {
+            Console.WriteLine(Headers);
+            Console.WriteLine(Body);
+            Console.WriteLine($"Status: {StatusCode}");
+        }
     }
 }

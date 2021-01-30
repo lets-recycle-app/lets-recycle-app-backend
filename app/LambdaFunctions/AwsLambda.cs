@@ -34,15 +34,15 @@ namespace LambdaFunctions
                 }
 
 
-                if (database.connect())
+                if (database.Connect())
                 {
-                    if (database.execute(sqlText, "depots"))
+                    if (database.Execute(sqlText, "depots"))
                     {
-                        body = database.mySqlReturnData;
+                        body = database.MySqlReturnData;
                     }
                     else
                     {
-                        LambdaLogger.Log($"===> ${database.mySqlErrorMessage}");
+                        LambdaLogger.Log($"===> ${database.MySqlErrorMessage}");
                     }
                 }
             }
@@ -54,20 +54,20 @@ namespace LambdaFunctions
                     sqlText += $" where driverId = {tableId}";
                 }
 
-                if (database.connect())
+                if (database.Connect())
                 {
-                    if (database.execute(sqlText, "drivers"))
+                    if (database.Execute(sqlText, "drivers"))
                     {
-                        body = database.mySqlReturnData;
+                        body = database.MySqlReturnData;
                     }
                     else
                     {
-                        LambdaLogger.Log($"===> ${database.mySqlErrorMessage}");
+                        LambdaLogger.Log($"===> ${database.MySqlErrorMessage}");
                     }
                 }
             }
 
-            database.close();
+            database.Close();
 
 
             return new APIGatewayProxyResponse

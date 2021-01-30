@@ -8,22 +8,22 @@ namespace Routing
 {
     public class Database
     {
-        private readonly string connectionString;
-        private MySqlConnection mySqlConnection;
+        private readonly string _connectionString;
+        private MySqlConnection _mySqlConnection;
 
-        public bool mySqlConnectionStatus;
-        public string mySqlErrorMessage;
-        public bool mySqlExecuteStatus;
-        public string mySqlReturnData;
+        public bool MySqlConnectionStatus;
+        public string MySqlErrorMessage;
+        public bool MySqlExecuteStatus;
+        public string MySqlReturnData;
 
 
         public Database()
         {
-            mySqlConnection = null;
-            mySqlConnectionStatus = false;
-            mySqlExecuteStatus = false;
-            mySqlErrorMessage = "";
-            mySqlReturnData = "";
+            _mySqlConnection = null;
+            MySqlConnectionStatus = false;
+            MySqlExecuteStatus = false;
+            MySqlErrorMessage = "";
+            MySqlReturnData = "";
 
             string endpoint = Environment.GetEnvironmentVariable("RDS_ENDPOINT");
             string port = Environment.GetEnvironmentVariable("RDS_PORT");
@@ -32,76 +32,77 @@ namespace Routing
             string password = Environment.GetEnvironmentVariable("RDS_PASSWORD");
 
 
-            connectionString =
+            _connectionString =
                 $"server={endpoint}; port={port}; database={database}; user={user}; password={password}";
         }
 
-        public bool connect()
+        public bool Connect()
         {
             try
             {
-                mySqlConnection = new MySqlConnection(connectionString);
+                _mySqlConnection = new MySqlConnection(_connectionString);
 
                 try
                 {
-                    mySqlConnection.Open();
-                    mySqlConnectionStatus = true;
+                    _mySqlConnection.Open();
+                    MySqlConnectionStatus = true;
                 }
                 catch (Exception error)
                 {
-                    mySqlErrorMessage = $"failed MySQL Open: ${error}";
+                    MySqlErrorMessage = $"failed MySQL Open: ${error}";
                 }
             }
             catch (Exception error)
             {
-                mySqlErrorMessage = $"failed MySQLConnection: ${error}";
+                MySqlErrorMessage = $"failed MySQLConnection: ${error}";
             }
 
-            return mySqlConnectionStatus;
+            return MySqlConnectionStatus;
         }
 
-        public bool execute(string sqlText)
+        public bool Execute(string sqlText)
         {
-            MySqlCommand sqlCommand = new MySqlCommand(sqlText, mySqlConnection);
+            MySqlCommand sqlCommand = new MySqlCommand(sqlText, _mySqlConnection);
             MySqlDataReader reader = sqlCommand.ExecuteReader();
 
             try
             {
-                var list = new List<dynamic>();
+                var tableData = new List<dynamic>();
 
                 while (reader.Read())
                 {
-                    var obj = new ExpandoObject();
-                    var d = obj as IDictionary<string, object>;
+                    var row = new ExpandoObject();
+                    var fields = (IDictionary<string, object>) row;
+
                     for (int i = 0; i < reader.FieldCount; i++)
                     {
                         if (reader.GetFieldType(i) == typeof(int))
                         {
-                            d[reader.GetName(i)] = reader.GetInt32(i);
+                            fields[reader.GetName(i)] = reader.GetInt32(i);
                         }
                         else
                         {
-                            d[reader.GetName(i)] = reader.GetString(i);
+                            fields[reader.GetName(i)] = reader.GetString(i);
                         }
                     }
 
-                    list.Add(obj);
+                    tableData.Add(row);
                 }
 
-                mySqlExecuteStatus = true;
-                mySqlReturnData = JsonConvert.SerializeObject(list, Formatting.Indented);
+                MySqlExecuteStatus = true;
+                MySqlReturnData = JsonConvert.SerializeObject(tableData, Formatting.Indented);
             }
             catch (Exception error)
             {
-                mySqlErrorMessage = $"SQL Error: ${error}";
+                MySqlErrorMessage = $"SQL Error: ${error}";
             }
 
-            return mySqlExecuteStatus;
+            return MySqlExecuteStatus;
         }
 
-        public void close()
+        public void Close()
         {
-            if (mySqlConnectionStatus && mySqlConnection != null) mySqlConnection.Close();
+            if (MySqlConnectionStatus) _mySqlConnection?.Close();
         }
     }
 }

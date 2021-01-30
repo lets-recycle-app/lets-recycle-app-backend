@@ -1,54 +1,48 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Routing
 {
     public class RouteFarm
     {
+        private readonly List<string> _routeOptions = new List<string>();
         private Database _database;
 
         public RouteFarm(string apiRoute)
         {
-            
-            ServiceName = "serviceName";
-            ServiceId = "serviceId";
-
             ResponseJson = new Response();
+
+            if (ParseRouteOptions(apiRoute))
+            {
+                Process();
+            }
         }
 
-        private string ServiceName { get; }
-        private string ServiceId { get; }
-        private Response ResponseJson { get; }
+        public Response ResponseJson { get; }
 
-        public void Process()
+        private void Process()
         {
-            string[] tables = {"depots", "drivers", "admins", "addresses", "routes"};
+            string sqlText = CheckIfSql();
 
-
-            if (Array.Exists(tables, element => element == ServiceName))
+            if (sqlText.Length > 0)
             {
-                //string sqlText = "select depotId, depotName, postCode, fleetSize from depots";
-                string sqlText = "select driverId, depotId, driverName, truckSize, userName, apiKey from drivers";
-
-                if (ServiceId != "0")
-                {
-                    sqlText += $" where depotId = {ServiceId}";
-                }
+                // valid sql service name found
 
                 _database = new Database();
 
-                if (_database.connect())
+                if (_database.Connect())
                 {
-                    if (_database.execute(sqlText))
+                    if (_database.Execute(sqlText))
                     {
-                        ResponseJson.Body = _database.mySqlReturnData;
+                        ResponseJson.Body = _database.MySqlReturnData;
 
 
-                        if (!_database.mySqlConnectionStatus)
+                        if (!_database.MySqlConnectionStatus)
                         {
                             // failed to connect to the database
                             ResponseJson.StatusCode = 500;
                         }
-                        else if (_database.mySqlExecuteStatus)
+                        else if (_database.MySqlExecuteStatus)
                         {
                             // database statement performed successfully
                             ResponseJson.StatusCode = 200;
@@ -61,7 +55,7 @@ namespace Routing
                     }
                 }
 
-                _database.close();
+                _database.Close();
             }
             else
             {
@@ -70,11 +64,95 @@ namespace Routing
             }
         }
 
-        public void ShowResponse()
+        private bool ParseRouteOptions(string apiRoute)
         {
-            Console.WriteLine(ResponseJson.Headers);
-            Console.WriteLine(ResponseJson.Body);
-            Console.WriteLine(ResponseJson.StatusCode);
+            // expect a route in the form of ~/api/{service}/{options+}
+            // store all options after /api/
+
+            string[] pathSplits = apiRoute.Split('/');
+
+            int optionCount = 0;
+
+            foreach (string thisPathDir in pathSplits)
+            {
+                switch (optionCount)
+                {
+                    case 0 when thisPathDir == "api":
+                        optionCount = 1;
+
+                        break;
+                    default:
+                    {
+                        if (optionCount > 0)
+                        {
+                            _routeOptions.Add(thisPathDir);
+                            optionCount += 1;
+                        }
+
+                        break;
+                    }
+                }
+            }
+
+            if (optionCount != 0) return true;
+
+            Console.WriteLine("Error: Bad route [~/api/{service}/{options+}].");
+            return false;
+        }
+
+        string CheckIfSql()
+        {
+            if (_routeOptions.Count == 0)
+            {
+                return "";
+            }
+
+            string table = _routeOptions[0];
+            string idString = "";
+
+            if (_routeOptions.Count > 1)
+            {
+                idString = _routeOptions[1];
+            }
+
+
+            if (!int.TryParse(idString, out int id))
+            {
+                id = 0;
+            }
+
+            string sqlText = table switch
+            {
+                "depots" =>
+                    "select depotId, depotName, postCode, fleetSize from depots",
+
+                "drivers" =>
+                    "select driverId, depotId, driverName, truckSize, userName, apiKey from drivers",
+
+                "admins" =>
+                    "select adminId from admins",
+
+                _ => ""
+            };
+
+            if (id != 0)
+            {
+                sqlText += table switch
+                {
+                    "depots" =>
+                        $" where depotId = {id}",
+
+                    "drivers" =>
+                        $" where driverId = {id}",
+
+                    "admins" =>
+                        $" where adminId = {id}",
+
+                    _ => ""
+                };
+            }
+
+            return sqlText;
         }
     }
 }
