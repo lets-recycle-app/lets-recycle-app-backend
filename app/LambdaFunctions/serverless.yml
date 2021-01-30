@@ -22,11 +22,21 @@ custom:
 
 functions:
  
-  api:
-    handler: LambdaAssembly::LambdaFunctions.AwsLambda::Main
+  apiGet:
+    handler: LambdaAssembly::LambdaFunctions.AwsLambda::ApiGet
     package:
       artifact: bin/Release/netcoreapp3.1/package.zip
     events:
       - httpApi:
-          path: /api/{table}/{tableId}
+          path: /{api+}
           method: get
+  apiPost:
+    handler: LambdaAssembly::LambdaFunctions.AwsLambda::ApiPost
+    package:
+      artifact: bin/Release/netcoreapp3.1/package.zip
+    events:
+      - httpApi:
+          path: /{api+}
+          method: post
+      
+   

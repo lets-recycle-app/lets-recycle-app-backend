@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.SystemTextJson;
@@ -10,95 +10,43 @@ namespace LambdaFunctions
 {
     public class AwsLambda
     {
-        public APIGatewayProxyResponse Main(APIGatewayProxyRequest request)
+        public APIGatewayProxyResponse ApiGet(APIGatewayProxyRequest request)
         {
-            string table = request.PathParameters["table"];
-            string tableId = request.PathParameters["tableId"];
+            
+            string apiRoute = request.PathParameters["api"];
+            
+            Console.WriteLine("-------------- G E T ------------------");
+            Console.WriteLine($"Api Get Route [{apiRoute}]");
+            Console.WriteLine($"Body {request.Body}");
             
 
-            Database database = new Database();
-
-            LambdaLogger.Log($"===> Path=[{request.PathParameters}] Method=[{request}]");
-
-            int statusCode = 200;
-            string body = "";
-
-            string sqlText = "";
-            if (table == "depots")
-            {
-                sqlText = "select depotId, depotName, postCode, fleetSize from depots";
-
-                if (tableId != "0")
-                {
-                    sqlText += $" where depotId = {tableId}";
-                }
-
-
-                if (database.Connect())
-                {
-                    if (database.Execute(sqlText, "depots"))
-                    {
-                        body = database.MySqlReturnData;
-                    }
-                    else
-                    {
-                        LambdaLogger.Log($"===> ${database.MySqlErrorMessage}");
-                    }
-                }
-            }
-            else if (table == "drivers")
-            {
-                sqlText = "select driverId, depotId, driverName, truckSize, userName, apiKey from drivers";
-                if (tableId != "0")
-                {
-                    sqlText += $" where driverId = {tableId}";
-                }
-
-                if (database.Connect())
-                {
-                    if (database.Execute(sqlText, "drivers"))
-                    {
-                        body = database.MySqlReturnData;
-                    }
-                    else
-                    {
-                        LambdaLogger.Log($"===> ${database.MySqlErrorMessage}");
-                    }
-                }
-            }
-
-            database.Close();
-
+            RouteFarm routeFarm = new RouteFarm(apiRoute);
 
             return new APIGatewayProxyResponse
             {
-                Body = body,
-                Headers = new Dictionary<string, string>
-                {
-                    {"Content-Type", "application/json"},
-                    {"Access-Control-Allow-Origin", "*"}
-                },
-                StatusCode = statusCode
+                Body = routeFarm.ResponseJson.Body,
+                Headers = routeFarm.ResponseJson.Headers,
+                StatusCode = routeFarm.ResponseJson.StatusCode
             };
         }
-
-        /*
-        public APIGatewayProxyResponse SaveData(APIGatewayProxyRequest request)
+        
+        public APIGatewayProxyResponse ApiPost(APIGatewayProxyRequest request)
         {
-            //var info = JsonSerializer.Deserialize<Info>(request.Body);
-            string info = request.Body.ToString();
+            string apiRoute = request.PathParameters["api"];
+            
+            Console.WriteLine("-------------- P O S T ------------------");
+            Console.WriteLine($"Api Post Route [{apiRoute}]");
+            Console.WriteLine($"Body {request.Body}");
+
+            
+            RouteFarm routeFarm = new RouteFarm(apiRoute);
 
             return new APIGatewayProxyResponse
             {
-                Headers = new Dictionary<string, string>
-                {
-                    {"Content-Type", "application/json"},
-                    {"Access-Control-Allow-Origin", "*"}
-                },
-                Body = info,
-                StatusCode = 200
+                Body = routeFarm.ResponseJson.Body,
+                Headers = routeFarm.ResponseJson.Headers,
+                StatusCode = routeFarm.ResponseJson.StatusCode
             };
         }
-        */
     }
 }

@@ -11,20 +11,20 @@ namespace Routing
             Body = "";
             StatusCode = 500;
 
-            Headers = JsonConvert.SerializeObject(new Dictionary<string, string>
+            Headers = new Dictionary<string, string>
             {
                 {"Content-Type", "application/json"},
                 {"Access-Control-Allow-Origin", "*"}
-            }, Formatting.Indented);
+            };
         }
 
-        public int StatusCode { get; set; }
         public string Body { get; set; }
-        private string Headers { get; }
+        public int StatusCode { get; set; }
+        public Dictionary<string, string> Headers { get; }
 
         public void Show()
         {
-            Console.WriteLine(Headers);
+            Console.WriteLine(JsonConvert.SerializeObject(Headers, Formatting.Indented));
             Console.WriteLine(Body);
             Console.WriteLine($"Status: {StatusCode}");
         }

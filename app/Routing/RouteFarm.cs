@@ -96,7 +96,8 @@ namespace Routing
 
             if (optionCount != 0) return true;
 
-            Console.WriteLine("Error: Bad route [~/api/{service}/{options+}].");
+            Console.WriteLine($"Error: Bad route supplied [{apiRoute}]");
+            Console.WriteLine("Usage: ~/api/{service}/{options+}");
             return false;
         }
 
