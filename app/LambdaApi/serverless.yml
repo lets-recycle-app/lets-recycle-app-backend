@@ -23,7 +23,7 @@ custom:
 functions:
  
   apiGet:
-    handler: LambdaAssembly::LambdaFunctions.AwsLambda::ApiGet
+    handler: LambdaAssembly::LambdaApi.LambdaApi::ApiGet
     package:
       artifact: bin/Release/netcoreapp3.1/package.zip
     events:
@@ -31,7 +31,7 @@ functions:
           path: /{api+}
           method: get
   apiPost:
-    handler: LambdaAssembly::LambdaFunctions.AwsLambda::ApiPost
+    handler: LambdaAssembly::LambdaApi.LambdaApi::ApiPost
     package:
       artifact: bin/Release/netcoreapp3.1/package.zip
     events:

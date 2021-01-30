@@ -6,9 +6,9 @@ using Routing;
 
 [assembly: LambdaSerializer(typeof(DefaultLambdaJsonSerializer))]
 
-namespace LambdaFunctions
+namespace LambdaApi
 {
-    public class AwsLambda
+    public class LambdaApi
     {
         public APIGatewayProxyResponse ApiGet(APIGatewayProxyRequest request)
         {
