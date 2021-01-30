@@ -1,7 +1,6 @@
 import { dbControl } from './dbControl.js';
 import { dataStore } from './dbUtils.js';
 
-import { createUsers, createCollRequest } from './databaseLegacyTables.js';
 import {
   createRoutes, createDepots, createDrivers, createAdmins, createAddresses, createPostCodes,
 } from './databaseTables.js';
@@ -16,8 +15,6 @@ const db = dbControl();
 
 (async () => {
   await db.connect({ store, region: 'eu-west-2', dbInstance: 'prod-mysql' });
-  await db.sql(createUsers);
-  await db.sql(createCollRequest);
   await db.sql(createRoutes);
   await db.sql(createDepots);
   await db.sql(createDrivers);
