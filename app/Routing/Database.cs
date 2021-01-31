@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Dynamic;
 using MySql.Data.MySqlClient;
-using Newtonsoft.Json;
 
 namespace Routing
 {
@@ -14,7 +14,8 @@ namespace Routing
         public bool MySqlConnectionStatus;
         public string MySqlErrorMessage;
         public bool MySqlExecuteStatus;
-        public string MySqlReturnData;
+        public object MySqlReturnData;
+        public int MySqlRowsReturned;
 
 
         public Database()
@@ -24,6 +25,7 @@ namespace Routing
             MySqlExecuteStatus = false;
             MySqlErrorMessage = "";
             MySqlReturnData = "";
+            MySqlRowsReturned = 0;
 
             string endpoint = Environment.GetEnvironmentVariable("RDS_ENDPOINT");
             string port = Environment.GetEnvironmentVariable("RDS_PORT");
@@ -90,7 +92,8 @@ namespace Routing
                 }
 
                 MySqlExecuteStatus = true;
-                MySqlReturnData = JsonConvert.SerializeObject(tableData, Formatting.Indented);
+                MySqlReturnData = tableData;
+                MySqlRowsReturned = tableData.Count;
             }
             catch (Exception error)
             {

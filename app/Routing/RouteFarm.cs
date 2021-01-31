@@ -1,74 +1,74 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Newtonsoft.Json;
 
 namespace Routing
 {
     public class RouteFarm
     {
+        public const int MaxRowLimit = 1000;
+
+        public readonly BodyContainer Body;
+
+        public readonly Dictionary<string, string> Headers = new Dictionary<string, string>
+        {
+            {"Content-Type", "application/json"},
+            {"Access-Control-Allow-Origin", "*"}
+        };
+
         private Database _database;
-        
-        public string Body { get; set; }
-        public int StatusCode { get; set; }
-        public Dictionary<string, string> Headers { get; set; } 
 
         public RouteFarm(string httpMethod, string endPoint)
         {
+            Body = new BodyContainer();
+
             Console.WriteLine($"Method: {httpMethod}");
             Console.WriteLine($"EndPoint: {endPoint}");
-
-            CreateResponseMessage();
 
             (string action, (string, string)[] query) = ProcessEndPointPath(endPoint);
 
             Table tableDesc = CheckIfSqlQuery(action);
 
-            if (tableDesc != null)
+            Console.WriteLine($"[{Body.result}]");
+            if (tableDesc == null)
             {
-                (string sqlText, string sqlError) = ConstructSql(tableDesc, query);
-
-                if (sqlText.Length == 0)
-                {
-                    Console.WriteLine($"SqlError [{sqlError}]");
-                }
-
-                ExecuteSql(sqlText);
+                Body.status = 400;
+                Body.message = $"error, bad path supplied [{endPoint}]";
+                return;
             }
-            else
-            {
-                Console.WriteLine($"Error: Bad route supplied [{endPoint}]");
-                Console.WriteLine("Usage: ~/api/{service}/{action+}");
-            }
+
+            string sqlText = ConstructSql(tableDesc, query);
+
+            if (sqlText.Length <= 0) return;
+
+            Body.message = "OK";
+            Body.status = 200;
+            ExecuteSql(sqlText);
         }
 
-        private Table CheckIfSqlQuery(string action)
+        private static Table CheckIfSqlQuery(string action)
         {
-            Table tableDesc = null;
+            Table tableDesc = action switch
+            {
+                "depots" => new Table(action, "depotId (int), depotName, postCode, fleetSize (int)"),
 
-            if (action == "depots")
-            {
-                tableDesc = new Table(action, "depotId (int), depotName, postCode, fleetSize (int)");
-            }
-            else if (action == "drivers")
-            {
-                tableDesc = new Table(action,
-                    "driverId (int),  depotId (int), driverName, truckSize (int), userName, apiKey");
-            }
-            else if (action == "routes")
-            {
-                tableDesc = new Table(action,
-                    "depotId, driverId, routeDate, routeSeqNo, addressId, routeAction, itemType, status, refNo");
-            }
-            else if (action == "postcodes")
-            {
-                tableDesc = new Table(action, "postcodeId (int), postcode, latitude (dec), longitude (dec)");
-            }
+                "drivers" => new Table(action,
+                    "driverId (int),  depotId (int), driverName, truckSize (int), userName, apiKey"),
+
+                "routes" => new Table(action,
+                    "depotId, driverId, routeDate (date), routeSeqNo, addressId, routeAction, itemType, status, refNo"),
+
+                "postcodes" => new Table(action, "postcodeId (int), postcode, latitude (dec), longitude (dec)"),
+
+                _ => null
+            };
 
             return tableDesc;
         }
 
 
-        private static (string, string) ConstructSql(Table table, (string, string)[] query)
+        private string ConstructSql(Table table, (string, string)[] query)
         {
             string sqlText = "";
 
@@ -87,14 +87,16 @@ namespace Routing
 
                         if (!table.SetFieldQuery(fieldName, value))
                         {
-                            return ("", $"Internal error accessing field name {fieldName}");
+                            Body.message = $"Internal error accessing field name {fieldName}";
+                            return "";
                         }
 
                         queryOn = true;
                     }
                     else
                     {
-                        return ("", $"Invalid field name {fieldName}");
+                        Body.message = $"Invalid field name {fieldName}";
+                        return "";
                     }
                 }
             }
@@ -116,13 +118,27 @@ namespace Routing
                             sqlText += " and ";
                         }
 
-                        sqlText += $"{field.Name} = {field.QueryValue}";
+                        if (field.FieldType == "date")
+                        {
+                            sqlText += $"date_format({field.Name},'%Y-%m-%d') = '{field.QueryValue}'";
+                        }
+                        else
+                        {
+                            sqlText += $"{field.Name} = {field.QueryValue}";    
+                        }
+                        
                         clauseCount += 1;
                     }
                 }
             }
 
-            return (sqlText, "Ok");
+            sqlText += $" limit {MaxRowLimit}";
+
+            Body.message = "OK";
+            Body.status = 200;
+
+            Console.WriteLine(sqlText);
+            return sqlText;
         }
 
 
@@ -138,23 +154,26 @@ namespace Routing
                 {
                     if (_database.Execute(sqlText))
                     {
-                        Body = _database.MySqlReturnData;
-
+                        Body.result = _database.MySqlReturnData;
+                        Body.count = _database.MySqlRowsReturned;
 
                         if (!_database.MySqlConnectionStatus)
                         {
                             // failed to connect to the database
-                            StatusCode = 500;
+                            Body.status = 500;
+                            Body.message = _database.MySqlErrorMessage;
                         }
                         else if (_database.MySqlExecuteStatus)
                         {
                             // database statement performed successfully
-                            StatusCode = 200;
+                            Body.status = 200;
+                            Body.message = "OK";
                         }
                         else
                         {
                             // connected ok, but the database statement failed
-                            StatusCode = 550;
+                            Body.status = 550;
+                            Body.message = _database.MySqlErrorMessage;
                         }
                     }
                 }
@@ -164,7 +183,8 @@ namespace Routing
             else
             {
                 // bad service requested - client error
-                StatusCode = 400;
+                Body.status = 400;
+                Body.message = "no service requested";
             }
         }
 
@@ -220,7 +240,7 @@ namespace Routing
             return (actionSegment, queryArray);
         }
 
-        private string[] PathSplit(string endPoint)
+        private static string[] PathSplit(string endPoint)
         {
             // expect the REST endpoint in the form of
             // ~/api/{service}/{options+}
@@ -266,25 +286,29 @@ namespace Routing
 
             return pathList;
         }
-        
-        private void CreateResponseMessage()
-        {
-            Body = "";
-            StatusCode = 500;
 
-            Headers = new Dictionary<string, string>
-            {
-                {"Content-Type", "application/json"},
-                {"Access-Control-Allow-Origin", "*"}
-            };
-        }
-        
         public void ShowResponseMessage()
         {
             Console.WriteLine(JsonConvert.SerializeObject(Headers, Formatting.Indented));
-            Console.WriteLine(Body);
-            Console.WriteLine($"Status: {StatusCode}");
+            Console.WriteLine(JsonConvert.SerializeObject(Body, Formatting.Indented));
         }
 
+        public class BodyContainer
+        {
+            public int count;
+            public int limit;
+            public string message;
+            public object result;
+            public int status;
+
+            public BodyContainer()
+            {
+                status = 500;
+                message = "internal error";
+                result = new string[0];
+                count = 0;
+                limit = MaxRowLimit;
+            }
+        }
     }
 }

@@ -1,6 +1,7 @@
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.SystemTextJson;
+using Newtonsoft.Json;
 using Routing;
 
 [assembly: LambdaSerializer(typeof(DefaultLambdaJsonSerializer))]
@@ -15,9 +16,9 @@ namespace LambdaApi
 
             return new APIGatewayProxyResponse
             {
-                Body = routeFarm.Body,
+                Body = JsonConvert.SerializeObject(routeFarm.Body),
                 Headers = routeFarm.Headers,
-                StatusCode = routeFarm.StatusCode
+                StatusCode = routeFarm.Body.status
             };
         }
 

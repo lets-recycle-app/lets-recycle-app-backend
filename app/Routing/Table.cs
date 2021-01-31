@@ -33,6 +33,11 @@ namespace Routing
                     fieldNameTrim = fieldName.Replace("(dec)", "").Trim();
                     fieldType = "decimal";
                 }
+                else if (fieldName.IndexOf("(date)", StringComparison.Ordinal) > 0)
+                {
+                    fieldNameTrim = fieldName.Replace("(date)", "").Trim();
+                    fieldType = "date";
+                }
 
                 AllFields.Add(new Field(fieldNameTrim, fieldType));
 
@@ -44,7 +49,15 @@ namespace Routing
                     FieldTextString += ", ";
                 }
 
-                FieldTextString += $"{fieldNameTrim}";
+                if (fieldType == "date")
+                {
+                    FieldTextString += $"date_format({fieldNameTrim},'%Y-%m-%d') as {fieldNameTrim}";
+                }
+                else
+                {
+                    FieldTextString += $"{fieldNameTrim}";    
+                }
+                
                 fieldCount += 1;
             }
         }
