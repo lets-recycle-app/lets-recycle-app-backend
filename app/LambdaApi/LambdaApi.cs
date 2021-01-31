@@ -15,9 +15,9 @@ namespace LambdaApi
 
             return new APIGatewayProxyResponse
             {
-                Body = routeFarm.ResponseJson.Body,
-                Headers = routeFarm.ResponseJson.Headers,
-                StatusCode = routeFarm.ResponseJson.StatusCode
+                Body = routeFarm.Body,
+                Headers = routeFarm.Headers,
+                StatusCode = routeFarm.StatusCode
             };
         }
 

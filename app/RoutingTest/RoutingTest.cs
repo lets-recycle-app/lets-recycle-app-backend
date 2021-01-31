@@ -23,7 +23,7 @@ namespace RoutingTest
 
             RouteFarm routeFarm = new RouteFarm("GET", apiRoute);
 
-            routeFarm.ResponseJson.Show();
+            routeFarm.ShowResponseMessage();
 
             return 0;
         }

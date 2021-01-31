@@ -1,17 +1,23 @@
 ﻿using System;
+using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace Routing
 {
     public class RouteFarm
     {
         private Database _database;
+        
+        public string Body { get; set; }
+        public int StatusCode { get; set; }
+        public Dictionary<string, string> Headers { get; set; } 
 
         public RouteFarm(string httpMethod, string endPoint)
         {
-            ResponseJson = new Response();
-
             Console.WriteLine($"Method: {httpMethod}");
             Console.WriteLine($"EndPoint: {endPoint}");
+
+            CreateResponseMessage();
 
             (string action, (string, string)[] query) = ProcessEndPointPath(endPoint);
 
@@ -34,8 +40,6 @@ namespace Routing
                 Console.WriteLine("Usage: ~/api/{service}/{action+}");
             }
         }
-
-        public Response ResponseJson { get; }
 
         private Table CheckIfSqlQuery(string action)
         {
@@ -64,7 +68,7 @@ namespace Routing
         }
 
 
-        (string, string) ConstructSql(Table table, (string, string)[] query)
+        private static (string, string) ConstructSql(Table table, (string, string)[] query)
         {
             string sqlText = "";
 
@@ -134,23 +138,23 @@ namespace Routing
                 {
                     if (_database.Execute(sqlText))
                     {
-                        ResponseJson.Body = _database.MySqlReturnData;
+                        Body = _database.MySqlReturnData;
 
 
                         if (!_database.MySqlConnectionStatus)
                         {
                             // failed to connect to the database
-                            ResponseJson.StatusCode = 500;
+                            StatusCode = 500;
                         }
                         else if (_database.MySqlExecuteStatus)
                         {
                             // database statement performed successfully
-                            ResponseJson.StatusCode = 200;
+                            StatusCode = 200;
                         }
                         else
                         {
                             // connected ok, but the database statement failed
-                            ResponseJson.StatusCode = 550;
+                            StatusCode = 550;
                         }
                     }
                 }
@@ -160,7 +164,7 @@ namespace Routing
             else
             {
                 // bad service requested - client error
-                ResponseJson.StatusCode = 400;
+                StatusCode = 400;
             }
         }
 
@@ -262,5 +266,25 @@ namespace Routing
 
             return pathList;
         }
+        
+        private void CreateResponseMessage()
+        {
+            Body = "";
+            StatusCode = 500;
+
+            Headers = new Dictionary<string, string>
+            {
+                {"Content-Type", "application/json"},
+                {"Access-Control-Allow-Origin", "*"}
+            };
+        }
+        
+        public void ShowResponseMessage()
+        {
+            Console.WriteLine(JsonConvert.SerializeObject(Headers, Formatting.Indented));
+            Console.WriteLine(Body);
+            Console.WriteLine($"Status: {StatusCode}");
+        }
+
     }
 }
