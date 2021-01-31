@@ -22,22 +22,11 @@ custom:
 
 functions:
  
-  apiGet:
-    handler: LambdaAssembly::LambdaApi.LambdaApi::ApiGet
+  api:
+    handler: LambdaAssembly::LambdaApi.LambdaApi::Api
     package:
       artifact: bin/Release/netcoreapp3.1/package.zip
     events:
       - http:
+          method: any
           path: /{api+}
-          method: get
-          
-  apiPost:
-    handler: LambdaAssembly::LambdaApi.LambdaApi::ApiPost
-    package:
-      artifact: bin/Release/netcoreapp3.1/package.zip
-    events:
-      - http:
-          path: /{api+}
-          method: post
-          
-   
