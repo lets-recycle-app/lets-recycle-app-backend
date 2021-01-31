@@ -46,7 +46,7 @@ const sqlInsertRoutes = async (sqlText) => {
 const generateRouteData = () => new Promise((completed) => {
   (async () => {
     const depotList = await getDepotList();
-    const datesList = await createFutureDates(3);
+    const datesList = await createFutureDates(7);
 
     depotList.forEach((depot) => {
       datesList.forEach((date) => {

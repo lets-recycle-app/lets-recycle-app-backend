@@ -27,16 +27,17 @@ functions:
     package:
       artifact: bin/Release/netcoreapp3.1/package.zip
     events:
-      - httpApi:
+      - http:
           path: /{api+}
           method: get
+          
   apiPost:
     handler: LambdaAssembly::LambdaApi.LambdaApi::ApiPost
     package:
       artifact: bin/Release/netcoreapp3.1/package.zip
     events:
-      - httpApi:
+      - http:
           path: /{api+}
           method: post
-      
+          
    

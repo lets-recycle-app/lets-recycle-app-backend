@@ -15,9 +15,13 @@ namespace RoutingTest
 
             string apiRoute = args[0];
 
+            apiRoute = "https://f4d5iqwknf.execute-api.eu-west-2.amazonaws.com/api/depots ? depotId=3&fleetSize=15";
+            apiRoute = "https://f4d5iqwknf.execute-api.eu-west-2.amazonaws.com/api/postcodes?postcode=\"CH43 8TJ\"";
+            
+
             Console.WriteLine($"Api Route [{apiRoute}]");
 
-            RouteFarm routeFarm = new RouteFarm(apiRoute);
+            RouteFarm routeFarm = new RouteFarm("GET", apiRoute);
 
             routeFarm.ResponseJson.Show();
 

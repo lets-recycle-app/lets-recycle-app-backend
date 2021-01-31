@@ -8,22 +8,124 @@ namespace Routing
         private readonly List<string> _routeOptions = new List<string>();
         private Database _database;
 
-        public RouteFarm(string apiRoute)
+        public RouteFarm(string httpMethod, string endPoint)
         {
             ResponseJson = new Response();
+            
+            Console.WriteLine($"Method: {httpMethod}");
+            Console.WriteLine($"EndPoint: {endPoint}");
 
-            if (ParseRouteOptions(apiRoute))
+            (string action, (string, string)[] query) = ProcessEndPointPath(endPoint);
+            
+            Table tableDesc = CheckIfSqlQuery(action);
+
+            if (tableDesc != null)
             {
-                Process();
+                (string sqlText, string sqlError) = ConstructSql(tableDesc, query);
+
+                if (sqlText.Length == 0)
+                {
+                    Console.WriteLine($"SqlError [{sqlError}]");
+                }
+
+                ExecuteSql(sqlText);
+            }
+            else
+            {
+                Console.WriteLine($"Error: Bad route supplied [{endPoint}]");
+                Console.WriteLine("Usage: ~/api/{service}/{action+}");
             }
         }
 
         public Response ResponseJson { get; }
 
-        private void Process()
+        private Table CheckIfSqlQuery(string action)
         {
-            string sqlText = CheckIfSql();
+            Table tableDesc = null;
 
+            if (action == "depots")
+            {
+                tableDesc = new Table(action, "depotId (int), depotName, postCode, fleetSize (int)");
+            }
+            else if (action == "drivers")
+            {
+                tableDesc = new Table(action,
+                    "driverId (int),  depotId (int), driverName, truckSize (int), userName, apiKey");
+            }
+            else if (action == "routes")
+            {
+                tableDesc = new Table(action,
+                    "depotId, driverId, routeDate, routeSeqNo, addressId, routeAction, itemType, status, refNo");
+            }
+            else if (action == "postcodes")
+            {
+                tableDesc = new Table(action, "postcodeId (int), postcode, latitude (dec), longitude (dec)");
+            }
+
+            return tableDesc;
+        }
+
+
+        (string, string) ConstructSql(Table table, (string, string)[] query)
+        {
+            string sqlText = "";
+
+            // compare the query string columns to the table defintion
+            // throw query out if column names do not match
+
+            bool queryOn = false;
+
+            if (query != null && query.Length > 0)
+            {
+                foreach (var (fieldName, value) in query)
+                {
+                    if (table.IsField(fieldName))
+                    {
+                        // valid column found, so add value and activate query 
+
+                        if (!table.SetFieldQuery(fieldName, value))
+                        {
+                            return ("", $"Internal error accessing field name {fieldName}");
+                        }
+
+                        queryOn = true;
+                    }
+                    else
+                    {
+                        return ("", $"Invalid field name {fieldName}");
+                    }
+                }
+            }
+
+            sqlText += $"select {table.FieldTextString} from {table.TableName}";
+
+            if (queryOn)
+            {
+                sqlText += " where ";
+
+                int clauseCount = 0;
+
+                foreach (var field in table.AllFields)
+                {
+                    if (field.QueryActive)
+                    {
+                        if (clauseCount >= 1)
+                        {
+                            sqlText += " and ";
+                        }
+
+                        sqlText += $"{field.Name} = {field.QueryValue}";
+                        clauseCount += 1;
+                    }
+                }
+            }
+
+            return (sqlText, "Ok");
+        }
+
+
+        private void ExecuteSql(string sqlText)
+        {
             if (sqlText.Length > 0)
             {
                 // valid sql service name found
@@ -64,96 +166,114 @@ namespace Routing
             }
         }
 
-        private bool ParseRouteOptions(string apiRoute)
+
+        private static int ToNumber(string inputString)
         {
-            // expect a route in the form of ~/api/{service}/{options+}
-            // store all options after /api/
-
-            string[] pathSplits = apiRoute.Split('/');
-
-            int optionCount = 0;
-
-            foreach (string thisPathDir in pathSplits)
+            if (!int.TryParse(inputString, out int outputNumber))
             {
-                switch (optionCount)
+                outputNumber = 0;
+            }
+
+            return outputNumber;
+        }
+
+        private (string, (string, string)[]) ProcessEndPointPath(string endPoint)
+        {
+            const int MaxQueries = 10;
+            const string QuerySeparator = "?";
+
+            (string, string)[] queryArray = new (string, string)[MaxQueries];
+
+            // after filtering for the last ~/api/
+            // only process the first subsequent path.
+            // the extended paths are available if required. 
+
+            string fullSegment = PathSplit(endPoint)[0].Trim();
+
+
+            if (!fullSegment.Contains(QuerySeparator))
+            {
+                // no queries specified only a single action instruction/tableName
+                return (fullSegment, null);
+            }
+
+
+            // split fullSegment into action?query
+
+            string[] split = fullSegment.Split(QuerySeparator);
+            string actionSegment = split[0].Trim();
+            string querySegment = split[1].Trim();
+
+
+            int count = 0;
+
+            if (querySegment.Length > 0)
+            {
+                string[] splitAndClauses = querySegment.Split('&');
+
+                foreach (var keyValue in splitAndClauses)
                 {
-                    case 0 when thisPathDir == "api":
-                        optionCount = 1;
+                    string[] equalClause = keyValue.Split('=');
 
-                        break;
-                    default:
+                    if (equalClause.Length == 2)
                     {
-                        if (optionCount > 0)
-                        {
-                            _routeOptions.Add(thisPathDir);
-                            optionCount += 1;
-                        }
-
-                        break;
+                        queryArray[count].Item1 = equalClause[0].Trim();
+                        queryArray[count].Item2 = equalClause[1].Trim();
+                        count += 1;
                     }
                 }
             }
 
-            if (optionCount != 0) return true;
+            Array.Resize(ref queryArray, count);
 
-            Console.WriteLine($"Error: Bad route supplied [{apiRoute}]");
-            Console.WriteLine("Usage: ~/api/{service}/{options+}");
-            return false;
+            return (actionSegment, queryArray);
         }
 
-        string CheckIfSql()
+        private string[] PathSplit(string endPoint)
         {
-            if (_routeOptions.Count == 0)
+            // expect the REST endpoint in the form of
+            // ~/api/{service}/{options+}
+            // only process paths after /api and
+            // return an array with the service in index 0
+            // and subsequent options from index 1...
+
+
+            const int maxPaths = 4;
+            string[] pathList = new string[maxPaths];
+
+            for (int i = 0; i < maxPaths; i++)
             {
-                return "";
+                // initialise so that paths are never null
+                pathList[i] = "_none_";
             }
 
-            string table = _routeOptions[0];
-            string idString = "";
 
-            if (_routeOptions.Count > 1)
+            string[] pathSplit = endPoint.Split('/');
+
+            int pathCount = 0;
+
+            foreach (string thisPathDir in pathSplit)
             {
-                idString = _routeOptions[1];
-            }
-
-
-            if (!int.TryParse(idString, out int id))
-            {
-                id = 0;
-            }
-
-            string sqlText = table switch
-            {
-                "depots" =>
-                    "select depotId, depotName, postCode, fleetSize from depots",
-
-                "drivers" =>
-                    "select driverId, depotId, driverName, truckSize, userName, apiKey from drivers",
-
-                "admins" =>
-                    "select adminId from admins",
-
-                _ => ""
-            };
-
-            if (id != 0)
-            {
-                sqlText += table switch
+                if (thisPathDir == "api")
                 {
-                    "depots" =>
-                        $" where depotId = {id}",
+                    // only start reading options from the
+                    // /api encountered
 
-                    "drivers" =>
-                        $" where driverId = {id}",
+                    pathCount = 1;
 
-                    "admins" =>
-                        $" where adminId = {id}",
-
-                    _ => ""
-                };
+                    for (int i = 0; i < maxPaths; i++)
+                    {
+                        pathList[i] = "_none_";
+                    }
+                }
+                else if (pathCount > 0 && pathCount < maxPaths && thisPathDir.Length > 0)
+                {
+                    pathList[pathCount - 1] = thisPathDir;
+                    pathCount += 1;
+                }
             }
 
-            return sqlText;
+            return pathList;
         }
     }
 }
