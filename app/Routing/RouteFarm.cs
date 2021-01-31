@@ -1,22 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Routing
 {
     public class RouteFarm
     {
-        private readonly List<string> _routeOptions = new List<string>();
         private Database _database;
 
         public RouteFarm(string httpMethod, string endPoint)
         {
             ResponseJson = new Response();
-            
+
             Console.WriteLine($"Method: {httpMethod}");
             Console.WriteLine($"EndPoint: {endPoint}");
 
             (string action, (string, string)[] query) = ProcessEndPointPath(endPoint);
-            
+
             Table tableDesc = CheckIfSqlQuery(action);
 
             if (tableDesc != null)
@@ -70,7 +68,7 @@ namespace Routing
         {
             string sqlText = "";
 
-            // compare the query string columns to the table defintion
+            // compare the query string columns to the table definition
             // throw query out if column names do not match
 
             bool queryOn = false;
@@ -166,23 +164,12 @@ namespace Routing
             }
         }
 
-
-        private static int ToNumber(string inputString)
-        {
-            if (!int.TryParse(inputString, out int outputNumber))
-            {
-                outputNumber = 0;
-            }
-
-            return outputNumber;
-        }
-
         private (string, (string, string)[]) ProcessEndPointPath(string endPoint)
         {
-            const int MaxQueries = 10;
-            const string QuerySeparator = "?";
+            const int maxQueries = 10;
+            const string querySeparator = "?";
 
-            (string, string)[] queryArray = new (string, string)[MaxQueries];
+            (string, string)[] queryArray = new (string, string)[maxQueries];
 
             // after filtering for the last ~/api/
             // only process the first subsequent path.
@@ -191,7 +178,7 @@ namespace Routing
             string fullSegment = PathSplit(endPoint)[0].Trim();
 
 
-            if (!fullSegment.Contains(QuerySeparator))
+            if (!fullSegment.Contains(querySeparator))
             {
                 // no queries specified only a single action instruction/tableName
                 return (fullSegment, null);
@@ -200,7 +187,7 @@ namespace Routing
 
             // split fullSegment into action?query
 
-            string[] split = fullSegment.Split(QuerySeparator);
+            string[] split = fullSegment.Split(querySeparator);
             string actionSegment = split[0].Trim();
             string querySegment = split[1].Trim();
 

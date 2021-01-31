@@ -13,7 +13,7 @@ namespace LambdaApi
         public APIGatewayProxyResponse ApiGet(APIGatewayProxyRequest request)
         {
             string apiRoute = request.PathParameters["api"];
-            
+
             RouteFarm routeFarm = new RouteFarm(request.HttpMethod, FullEndpoint(request));
 
             return new APIGatewayProxyResponse
@@ -26,7 +26,7 @@ namespace LambdaApi
 
         private string FullEndpoint(APIGatewayProxyRequest request)
         {
-            string fullEndpoint = request.Path.Replace("%20","");
+            string fullEndpoint = request.Path.Replace("%20", "");
 
             int count = 0;
 
@@ -60,7 +60,7 @@ namespace LambdaApi
             Console.WriteLine($"Body {request.Body}");
 
 
-            RouteFarm routeFarm = new RouteFarm("GET",apiRoute);
+            RouteFarm routeFarm = new RouteFarm("GET", apiRoute);
 
             return new APIGatewayProxyResponse
             {
