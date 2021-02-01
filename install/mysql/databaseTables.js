@@ -7,7 +7,7 @@ create table routes (
     routeDate date not null,                /* route date */
     routeSeqNo int not null,                /* delivery or recycle seq no. in route 1,2,3,... */
     addressId int not null,                 /* address Id from table addresses */
-    addressPostCode varchar(8) not null,    /* address postcode */
+    addressPostcode varchar(8) not null,    /* address postcode */
     routeAction varchar(10) not null,       /* deliver or recycle */
     itemType varchar(30) not null,          /* fridge, freezer etc. */
     status varchar(10) not null,            /* pending, completed, failed */
@@ -23,7 +23,7 @@ drop table if exists depots;
 create table depots (
   depotId int not null auto_increment,      /* depotId auto created */
   depotName varchar(50) not null,           /* depot town name */   
-  postCode varchar(8) not null,             /* depot post code */
+  postcode varchar(8) not null,             /* depot post code */
   fleetSize int not null,                   /* number of drivers attached to depot */
   primary key (depotId)
 );
@@ -82,9 +82,8 @@ alter table addresses auto_increment=1;
 `;
 
 export const createPostCodes = `
-drop table if exists postcodes;
 
-create table postcodes (
+create table if not exists postcodes (
   postcodeId int not null auto_increment,   /* postcodeId auto created */
   postcode varchar(8) not null,             /* a uk valid postcode */
   latitude  decimal(12,9) not null,           /* latitude associated with the postcode */

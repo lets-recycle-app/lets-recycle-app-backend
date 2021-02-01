@@ -1,7 +1,7 @@
 import { dbControl } from './dbControl.js';
 import { getRandomInt, dataStore, createFakeUser } from './dbUtils.js';
 
-const createDepotsData = `
+export const createDepotsData = `
 
 alter table depots auto_increment=1;
 
@@ -27,6 +27,16 @@ values
 ('Reading', 'RG1 3YL', 13),
 ('Blackburn', 'BB2 1NA', 19),
 ('York', 'YO10 3FQ', 9);
+`;
+
+export const createAdminsData = `
+
+alter table admins auto_increment=1;
+
+insert into admins (adminName, userName, apiKey) 
+values
+('Sarah Conor', 'sarah.conor', 'p06189a0-g75a-4b35-881d-1c71b88a503b'),
+('Mike Smith', 'mike.smith', '3c706694-0f70-4ce5-a5a7-74957c44f162');
 `;
 
 const createDriversData = (db, depotArray) => new Promise((completed) => {
@@ -62,9 +72,12 @@ export const createCoreData = () => new Promise((completed) => {
     const store = dataStore();
     const db = dbControl();
     await db.connect({ store, region: 'eu-west-2', dbInstance: 'prod-mysql' });
+    await db.sql('delete from admins');
+    await db.sql(createAdminsData);
     await db.sql('delete from depots');
     await db.sql(createDepotsData);
     await db.sql('select * from depots', 'depots');
+
 
     await createDriversData(db, store.get('depots')[0])
       .then(() => {

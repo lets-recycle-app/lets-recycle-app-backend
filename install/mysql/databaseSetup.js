@@ -17,8 +17,8 @@ const db = dbControl();
   await db.connect({ store, region: 'eu-west-2', dbInstance: 'prod-mysql' });
   await db.sql(createRoutes);
   await db.sql(createDepots);
-  await db.sql(createDrivers);
   await db.sql(createAdmins);
+  await db.sql(createDrivers);
   await db.sql(createAddresses);
   await db.sql(createPostCodes);
 
