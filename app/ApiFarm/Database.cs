@@ -26,7 +26,7 @@ namespace ApiFarm
             MySqlReturnData = "";
             MySqlRowsReturned = 0;
 
-            string endpoint = Environment.GetEnvironmentVariable("RDS_ENDPOINT");
+            string host = Environment.GetEnvironmentVariable("RDS_HOST");
             string port = Environment.GetEnvironmentVariable("RDS_PORT");
             string database = Environment.GetEnvironmentVariable("RDS_DATABASE");
             string user = Environment.GetEnvironmentVariable("RDS_USER");
@@ -34,7 +34,7 @@ namespace ApiFarm
 
 
             _connectionString =
-                $"server={endpoint}; port={port}; database={database}; user={user}; password={password}";
+                $"server={host}; port={port}; database={database}; user={user}; password={password}";
         }
 
         public bool Connect()

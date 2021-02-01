@@ -8,7 +8,7 @@ provider:
   region: eu-west-2
   profile: serverless
   environment:
-    RDS_ENDPOINT: ${self:custom.awsSecret.endpoint}
+    RDS_HOST: ${self:custom.awsSecret.host}
     RDS_PORT: ${self:custom.awsSecret.port}
     RDS_DATABASE: ${self:custom.awsSecret.database}
     RDS_USER: ${self:custom.awsSecret.user}
@@ -18,7 +18,7 @@ package:
   individually: true
 
 custom:
-  awsSecret: ${ssm:/aws/reference/secretsmanager/dev-mysql~true}
+  awsSecret: ${ssm:/aws/reference/secretsmanager/prod-mysql~true}
 
 functions:
  

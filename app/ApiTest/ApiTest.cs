@@ -16,7 +16,10 @@ namespace ApiTest
 
 
             //endPoint = "https://f4d7ipwknd.execute-api.eu-west-2.amazonaws.com/api/depots?depotId=1";
-            endPoint = "/dev/api/postcodes? postcode = CH43 8TJ";
+            //endPoint = "/dev/api/postcodes? postcode = CH43 8TJ";
+            
+            //endPoint = "/dev/api/collect-confirm?";
+            endPoint = "/dev/api/admins";
 
 
             Console.WriteLine($"Api Route [{endPoint}]");

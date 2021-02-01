@@ -18,23 +18,41 @@ namespace ApiFarm
         };
 
         private Database _database;
+        private Collection Collect;
+
 
         public ApiFarm(string httpMethod, string endPoint)
         {
             Body = new BodyContainer();
+            Collect = new Collection(this);
 
             Console.WriteLine($"Method: {httpMethod}");
             Console.WriteLine($"EndPoint: {endPoint}");
 
+            switch (httpMethod)
+            {
+                case "GET":
+                    ApiGet(endPoint);
+                    break;
+                case "POST":
+                    ApiPost(endPoint);
+                    break;
+                default:
+                    ApiStatus(400, $"error, invalid method [{httpMethod}]");
+                    break;
+            }
+        }
+
+
+        private void ApiGet(string endPoint)
+        {
             (string action, (string, string)[] query) = ProcessEndPointPath(endPoint);
 
-            Table tableDesc = CheckIfSqlQuery(action);
+            Table tableDesc = IsValidTable(action);
 
-            Console.WriteLine($"[{Body.result}]");
             if (tableDesc == null)
             {
-                Body.status = 400;
-                Body.message = $"error, bad endpoint [{endPoint}]";
+                ApiStatus(400, "error, invalid service [GET]");
                 return;
             }
 
@@ -47,20 +65,55 @@ namespace ApiFarm
             ExecuteSql(sqlText);
         }
 
-        private static Table CheckIfSqlQuery(string action)
+
+        private void ApiPost(string endPoint)
+        {
+            (string action, (string, string)[] options) = ProcessEndPointPath(endPoint);
+
+            
+
+            switch (action)
+            {
+                case "collect-confirm":
+                    Collect.Confirm();
+                    break;
+                case "collect-update":
+                    Collect.Update();
+                    break;
+                case "collect-cancel":
+                    Collect.Cancel();
+                    break;
+                default:
+                    ApiStatus(400, "error, invalid service [POST]");
+                    break;
+            }
+        }
+
+        public void ApiStatus(int statusCode, string message)
+        {
+            Body.status = statusCode;
+            Body.message = message;
+        }
+
+        private static Table IsValidTable(string action)
         {
             Table tableDesc = action switch
             {
-                "depots" => new Table(action, "depotId (int), depotName, postCode, fleetSize (int)"),
+                "addresses" => new Table(action, "addressId (int), postcode, customerName, customerEmail, locationType, fullAddress, houseNo, street, townAddress, notes"),
+                
+                "admins" => new Table(action,
+                    "adminId (int),  adminName, userName, apiKey"),
+
+                "depots" => new Table(action, "depotId (int), depotName, postcode, fleetSize (int)"),
 
                 "drivers" => new Table(action,
                     "driverId (int),  depotId (int), driverName, truckSize (int), userName, apiKey"),
-
-                "routes" => new Table(action,
-                    "depotId, driverId, routeDate (date), routeSeqNo, addressId, routeAction, itemType, status, refNo"),
-
+                
                 "postcodes" => new Table(action, "postcodeId (int), postcode, latitude (dec), longitude (dec)"),
 
+                "routes" => new Table(action,
+                    "depotId (int), driverId (int), routeDate (date), routeSeqNo, addressId (int), addressPostcode, routeAction, itemType, status, refNo"),
+                
                 _ => null
             };
 
