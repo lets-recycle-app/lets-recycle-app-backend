@@ -15,9 +15,9 @@ namespace ApiLambda
 
             return new APIGatewayProxyResponse
             {
-                Body = JsonConvert.SerializeObject(apiFarm.Body),
+                Body = JsonConvert.SerializeObject(apiFarm.GetResponseBody()),
                 Headers = apiFarm.Headers,
-                StatusCode = apiFarm.Body.status
+                StatusCode = apiFarm.Status
             };
         }
 

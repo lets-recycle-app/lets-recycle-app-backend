@@ -55,9 +55,9 @@ namespace ApiFarm
                 }
                 else
                 {
-                    FieldTextString += $"{fieldNameTrim}";    
+                    FieldTextString += $"{fieldNameTrim}";
                 }
-                
+
                 fieldCount += 1;
             }
         }

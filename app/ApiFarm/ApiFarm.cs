@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using Newtonsoft.Json;
 
@@ -7,9 +8,11 @@ namespace ApiFarm
 {
     public class ApiFarm
     {
-        private const int MaxRowLimit = 1000;
+        private const int Limit = 1000;
+        private readonly Collection _collect;
 
-        public readonly BodyContainer Body;
+
+        //public readonly BodyContainer Body;
 
         public readonly Dictionary<string, string> Headers = new Dictionary<string, string>
         {
@@ -18,13 +21,11 @@ namespace ApiFarm
         };
 
         private Database _database;
-        private Collection Collect;
 
 
         public ApiFarm(string httpMethod, string endPoint)
         {
-            Body = new BodyContainer();
-            Collect = new Collection(this);
+            _collect = new Collection(this);
 
             Console.WriteLine($"Method: {httpMethod}");
             Console.WriteLine($"EndPoint: {endPoint}");
@@ -43,10 +44,20 @@ namespace ApiFarm
             }
         }
 
+        private int Count { get; set; }
+        private string Message { get; set; }
+        private dynamic Result { get; set; }
+        public int Status { get; private set; }
 
         private void ApiGet(string endPoint)
         {
             (string action, (string, string)[] query) = ProcessEndPointPath(endPoint);
+
+            if (action == "collect-request")
+            {
+                _collect.Request();
+                return;
+            }
 
             Table tableDesc = IsValidTable(action);
 
@@ -60,8 +71,8 @@ namespace ApiFarm
 
             if (sqlText.Length <= 0) return;
 
-            Body.message = "OK";
-            Body.status = 200;
+            Message = "OK";
+            Status = 200;
             ExecuteSql(sqlText);
         }
 
@@ -70,18 +81,17 @@ namespace ApiFarm
         {
             (string action, (string, string)[] options) = ProcessEndPointPath(endPoint);
 
-            
-
             switch (action)
             {
                 case "collect-confirm":
-                    Collect.Confirm();
+                    Console.WriteLine(options);
+                    _collect.Confirm();
                     break;
                 case "collect-update":
-                    Collect.Update();
+                    _collect.Update();
                     break;
                 case "collect-cancel":
-                    Collect.Cancel();
+                    _collect.Cancel();
                     break;
                 default:
                     ApiStatus(400, "error, invalid service [POST]");
@@ -91,16 +101,17 @@ namespace ApiFarm
 
         public void ApiStatus(int statusCode, string message)
         {
-            Body.status = statusCode;
-            Body.message = message;
+            Status = statusCode;
+            Message = message;
         }
 
         private static Table IsValidTable(string action)
         {
             Table tableDesc = action switch
             {
-                "addresses" => new Table(action, "addressId (int), postcode, customerName, customerEmail, locationType, fullAddress, houseNo, street, townAddress, notes"),
-                
+                "addresses" => new Table(action,
+                    "addressId (int), postcode, customerName, customerEmail, locationType, fullAddress, houseNo, street, townAddress, notes"),
+
                 "admins" => new Table(action,
                     "adminId (int),  adminName, userName, apiKey"),
 
@@ -108,12 +119,12 @@ namespace ApiFarm
 
                 "drivers" => new Table(action,
                     "driverId (int),  depotId (int), driverName, truckSize (int), userName, apiKey"),
-                
+
                 "postcodes" => new Table(action, "postcodeId (int), postcode, latitude (dec), longitude (dec)"),
 
                 "routes" => new Table(action,
                     "depotId (int), driverId (int), routeDate (date), routeSeqNo, addressId (int), addressPostcode, routeAction, itemType, status, refNo"),
-                
+
                 _ => null
             };
 
@@ -140,7 +151,7 @@ namespace ApiFarm
 
                         if (!table.SetFieldQuery(fieldName, value))
                         {
-                            Body.message = $"Internal error accessing field name {fieldName}";
+                            Message = $"Internal error accessing field name {fieldName}";
                             return "";
                         }
 
@@ -148,7 +159,7 @@ namespace ApiFarm
                     }
                     else
                     {
-                        Body.message = $"Invalid field name {fieldName}";
+                        Message = $"Invalid field name {fieldName}";
                         return "";
                     }
                 }
@@ -182,10 +193,10 @@ namespace ApiFarm
                 }
             }
 
-            sqlText += $" limit {MaxRowLimit}";
+            sqlText += $" limit {Limit}";
 
-            Body.message = "OK";
-            Body.status = 200;
+            Message = "OK";
+            Status = 200;
 
             Console.WriteLine(sqlText);
             return sqlText;
@@ -204,26 +215,26 @@ namespace ApiFarm
                 {
                     if (_database.Execute(sqlText))
                     {
-                        Body.result = _database.MySqlReturnData;
-                        Body.count = _database.MySqlRowsReturned;
+                        Result = _database.MySqlReturnData;
+                        Count = _database.MySqlRowsReturned;
 
                         if (!_database.MySqlConnectionStatus)
                         {
                             // failed to connect to the database
-                            Body.status = 500;
-                            Body.message = _database.MySqlErrorMessage;
+                            Status = 500;
+                            Message = _database.MySqlErrorMessage;
                         }
                         else if (_database.MySqlExecuteStatus)
                         {
                             // database statement performed successfully
-                            Body.status = 200;
-                            Body.message = "OK";
+                            Status = 200;
+                            Message = "OK";
                         }
                         else
                         {
                             // connected ok, but the database statement failed
-                            Body.status = 550;
-                            Body.message = _database.MySqlErrorMessage;
+                            Status = 550;
+                            Message = _database.MySqlErrorMessage;
                         }
                     }
                 }
@@ -233,8 +244,8 @@ namespace ApiFarm
             else
             {
                 // bad service requested - client error
-                Body.status = 400;
-                Body.message = "no service requested";
+                Status = 400;
+                Message = "no service requested";
             }
         }
 
@@ -338,25 +349,19 @@ namespace ApiFarm
         public void ShowResponseMessage()
         {
             Console.WriteLine(JsonConvert.SerializeObject(Headers, Formatting.Indented));
-            Console.WriteLine(JsonConvert.SerializeObject(Body, Formatting.Indented));
+            Console.WriteLine(JsonConvert.SerializeObject(GetResponseBody(), Formatting.Indented));
         }
 
-        public class BodyContainer
+        public dynamic GetResponseBody()
         {
-            public int count;
-            private int limit;
-            public string message;
-            public object result;
-            public int status;
+            dynamic response = new ExpandoObject();
+            response.status = Status;
+            response.message = Message;
+            response.count = Count;
+            response.limit = Limit;
+            response.result = Result;
 
-            public BodyContainer()
-            {
-                status = 500;
-                message = "internal error";
-                result = new string[0];
-                count = 0;
-                limit = MaxRowLimit;
-            }
+            return response;
         }
     }
 }

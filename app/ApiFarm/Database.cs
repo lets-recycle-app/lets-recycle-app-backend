@@ -13,7 +13,7 @@ namespace ApiFarm
         public bool MySqlConnectionStatus;
         public string MySqlErrorMessage;
         public bool MySqlExecuteStatus;
-        public object MySqlReturnData;
+        public dynamic MySqlReturnData;
         public int MySqlRowsReturned;
 
 
@@ -81,8 +81,7 @@ namespace ApiFarm
                         {
                             fields[reader.GetName(i)] = reader.GetInt32(i);
                         }
-                        else
-                        if (reader.GetFieldType(i) == typeof(decimal))
+                        else if (reader.GetFieldType(i) == typeof(decimal))
                         {
                             fields[reader.GetName(i)] = reader.GetDecimal(i);
                         }
