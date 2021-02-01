@@ -18,7 +18,7 @@ namespace ApiFarm
         };
 
         private Database _database;
-        
+
 
         public ApiFarm(string httpMethod, string endPoint)
         {
@@ -41,9 +41,9 @@ namespace ApiFarm
             }
         }
 
-        private int Count { get; set; }
-        private string Message { get; set; }
-        private dynamic Result { get; set; }
+        public int Count { get; set; }
+        public string Message { get; set; }
+        public dynamic Result { get; set; }
         public int Status { get; private set; }
 
         private void ApiGet(string endPoint)
