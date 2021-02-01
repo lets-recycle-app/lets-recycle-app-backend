@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Dynamic;
 using MySql.Data.MySqlClient;
 
@@ -81,6 +80,11 @@ namespace ApiFarm
                         if (reader.GetFieldType(i) == typeof(int))
                         {
                             fields[reader.GetName(i)] = reader.GetInt32(i);
+                        }
+                        else
+                        if (reader.GetFieldType(i) == typeof(decimal))
+                        {
+                            fields[reader.GetName(i)] = reader.GetDecimal(i);
                         }
                         else
                         {

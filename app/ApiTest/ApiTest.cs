@@ -1,5 +1,4 @@
 ﻿using System;
-using ApiFarm;
 
 namespace ApiTest
 {
@@ -17,6 +16,7 @@ namespace ApiTest
 
 
             //endPoint = "https://f4d7ipwknd.execute-api.eu-west-2.amazonaws.com/api/depots?depotId=1";
+            endPoint = "/dev/api/postcodes? postcode = CH43 8TJ";
 
 
             Console.WriteLine($"Api Route [{endPoint}]");

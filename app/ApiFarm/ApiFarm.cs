@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Linq;
 using Newtonsoft.Json;
 
 namespace ApiFarm
 {
     public class ApiFarm
     {
-        public const int MaxRowLimit = 1000;
+        private const int MaxRowLimit = 1000;
 
         public readonly BodyContainer Body;
 
@@ -109,26 +109,23 @@ namespace ApiFarm
 
                 int clauseCount = 0;
 
-                foreach (var field in table.AllFields)
+                foreach (var field in table.AllFields.Where(field => field.QueryActive))
                 {
-                    if (field.QueryActive)
+                    if (clauseCount >= 1)
                     {
-                        if (clauseCount >= 1)
-                        {
-                            sqlText += " and ";
-                        }
-
-                        if (field.FieldType == "date")
-                        {
-                            sqlText += $"date_format({field.Name},'%Y-%m-%d') = '{field.QueryValue}'";
-                        }
-                        else
-                        {
-                            sqlText += $"{field.Name} = {field.QueryValue}";    
-                        }
-                        
-                        clauseCount += 1;
+                        sqlText += " and ";
                     }
+
+                    if (field.FieldType == "date")
+                    {
+                        sqlText += $"date_format({field.Name},'%Y-%m-%d') = '{field.QueryValue}'";
+                    }
+                    else
+                    {
+                        sqlText += $"{field.Name} = {field.QueryValue}";
+                    }
+
+                    clauseCount += 1;
                 }
             }
 
@@ -226,12 +223,10 @@ namespace ApiFarm
                 {
                     string[] equalClause = keyValue.Split('=');
 
-                    if (equalClause.Length == 2)
-                    {
-                        queryArray[count].Item1 = equalClause[0].Trim();
-                        queryArray[count].Item2 = equalClause[1].Trim();
-                        count += 1;
-                    }
+                    if (equalClause.Length != 2) continue;
+                    queryArray[count].Item1 = equalClause[0].Trim();
+                    queryArray[count].Item2 = equalClause[1].Trim();
+                    count += 1;
                 }
             }
 
@@ -296,7 +291,7 @@ namespace ApiFarm
         public class BodyContainer
         {
             public int count;
-            public int limit;
+            private int limit;
             public string message;
             public object result;
             public int status;

@@ -2,7 +2,6 @@ using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.SystemTextJson;
 using Newtonsoft.Json;
-using ApiFarm;
 
 [assembly: LambdaSerializer(typeof(DefaultLambdaJsonSerializer))]
 
@@ -28,13 +27,13 @@ namespace ApiLambda
             // the endpoint URL. Recreate the the full http path to ensure
             // that this lambda interface utilises the identical logic 
             // as the local test environment.
-            
+
             string fullEndpoint = request.Path.Replace("%20", "");
-            
+
             if (request.QueryStringParameters == null) return fullEndpoint;
-            
+
             int count = 0;
-            
+
             foreach (var (key, value) in request.QueryStringParameters)
             {
                 if (count > 0)
