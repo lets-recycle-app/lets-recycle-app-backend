@@ -11,9 +11,6 @@ namespace ApiFarm
         private const int Limit = 1000;
         private readonly Collection _collect;
 
-
-        //public readonly BodyContainer Body;
-
         public readonly Dictionary<string, string> Headers = new Dictionary<string, string>
         {
             {"Content-Type", "application/json"},
@@ -21,7 +18,7 @@ namespace ApiFarm
         };
 
         private Database _database;
-
+        
 
         public ApiFarm(string httpMethod, string endPoint)
         {
