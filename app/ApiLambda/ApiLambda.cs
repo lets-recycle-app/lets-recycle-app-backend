@@ -2,32 +2,32 @@ using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.SystemTextJson;
 using Newtonsoft.Json;
-using Routing;
+using ApiFarm;
 
 [assembly: LambdaSerializer(typeof(DefaultLambdaJsonSerializer))]
 
-namespace LambdaApi
+namespace ApiLambda
 {
-    public class LambdaApi
+    public class ApiLambda
     {
         public APIGatewayProxyResponse Api(APIGatewayProxyRequest request)
         {
-            RouteFarm routeFarm = new RouteFarm(request.HttpMethod, FullEndpoint(request));
+            ApiFarm.ApiFarm apiFarm = new ApiFarm.ApiFarm(request.HttpMethod, FullEndpoint(request));
 
             return new APIGatewayProxyResponse
             {
-                Body = JsonConvert.SerializeObject(routeFarm.Body),
-                Headers = routeFarm.Headers,
-                StatusCode = routeFarm.Body.status
+                Body = JsonConvert.SerializeObject(apiFarm.Body),
+                Headers = apiFarm.Headers,
+                StatusCode = apiFarm.Body.status
             };
         }
 
         private static string FullEndpoint(APIGatewayProxyRequest request)
         {
-            // lambda proxy handler separates query string from 
-            // Rest endpoint. Recreate the the full path to allow
-            // this lambda to interface in the same way as the local
-            // test environment.
+            // The lambda proxy handler extracts the query string from 
+            // the endpoint URL. Recreate the the full http path to ensure
+            // that this lambda interface utilises the identical logic 
+            // as the local test environment.
             
             string fullEndpoint = request.Path.Replace("%20", "");
             

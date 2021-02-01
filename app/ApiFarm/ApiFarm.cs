@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Newtonsoft.Json;
 
-namespace Routing
+namespace ApiFarm
 {
-    public class RouteFarm
+    public class ApiFarm
     {
         public const int MaxRowLimit = 1000;
 
@@ -19,7 +19,7 @@ namespace Routing
 
         private Database _database;
 
-        public RouteFarm(string httpMethod, string endPoint)
+        public ApiFarm(string httpMethod, string endPoint)
         {
             Body = new BodyContainer();
 
@@ -34,7 +34,7 @@ namespace Routing
             if (tableDesc == null)
             {
                 Body.status = 400;
-                Body.message = $"error, bad path supplied [{endPoint}]";
+                Body.message = $"error, bad endpoint [{endPoint}]";
                 return;
             }
 

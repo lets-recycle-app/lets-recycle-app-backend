@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Dynamic;
 using MySql.Data.MySqlClient;
 
-namespace Routing
+namespace ApiFarm
 {
     public class Database
     {

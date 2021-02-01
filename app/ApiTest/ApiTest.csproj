@@ -11,7 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Routing\Routing.csproj" />
+      <ProjectReference Include="..\ApiFarm\ApiFarm.csproj" />
     </ItemGroup>
 
 </Project>

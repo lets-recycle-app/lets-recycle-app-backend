@@ -1,9 +1,9 @@
 ﻿Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoutingTest", "RoutingTest\RoutingTest.csproj", "{F2FD195D-94CC-4728-BA32-09EF1906F7C2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiTest", "ApiTest\ApiTest.csproj", "{F2FD195D-94CC-4728-BA32-09EF1906F7C2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Routing", "Routing\Routing.csproj", "{9BEBE443-2E73-4599-A653-9C7E46D35D7D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiFarm", "ApiFarm\ApiFarm.csproj", "{9BEBE443-2E73-4599-A653-9C7E46D35D7D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LambdaApi", "LambdaApi\LambdaApi.csproj", "{3E24B668-E642-4028-A706-B7AEC96170C4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiLambda", "ApiLambda\ApiLambda.csproj", "{3E24B668-E642-4028-A706-B7AEC96170C4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

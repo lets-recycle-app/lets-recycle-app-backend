@@ -23,7 +23,7 @@ custom:
 functions:
  
   api:
-    handler: LambdaAssembly::LambdaApi.LambdaApi::Api
+    handler: ApiAssembly::ApiLambda.ApiLambda::Api
     package:
       artifact: bin/Release/netcoreapp3.1/package.zip
     events:

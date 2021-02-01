@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
-    <AssemblyName>LambdaAssembly</AssemblyName>
+    <AssemblyName>ApiAssembly</AssemblyName>
     <PackageId>LambdaFunctions</PackageId>
   </PropertyGroup>
 
@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Routing\Routing.csproj" />
+    <ProjectReference Include="..\ApiFarm\ApiFarm.csproj" />
   </ItemGroup>
 
 </Project>

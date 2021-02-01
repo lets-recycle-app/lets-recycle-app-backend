@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Routing
+namespace ApiFarm
 {
     public class Table
     {
