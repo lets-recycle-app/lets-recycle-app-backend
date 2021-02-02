@@ -1,7 +1,9 @@
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.SystemTextJson;
-using Newtonsoft.Json;
+using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
+using static ApiCore.Main;
 
 [assembly: LambdaSerializer(typeof(DefaultLambdaJsonSerializer))]
 
@@ -11,13 +13,21 @@ namespace ApiLambda
     {
         public APIGatewayProxyResponse Api(APIGatewayProxyRequest request)
         {
-            ApiFarm.ApiFarm apiFarm = new ApiFarm.ApiFarm(request.HttpMethod, FullEndpoint(request));
-
+            var headers = new Dictionary<string, string>
+            {
+                {"Content-Type", "application/json"},
+                {"Access-Control-Allow-Origin", "*"}
+            }; 
+            
+            JObject body=Body(request.HttpMethod, FullEndpoint(request));
+            int statusCode = int.Parse(body["status"].ToString());
             return new APIGatewayProxyResponse
             {
-                Body = JsonConvert.SerializeObject(apiFarm.GetResponseBody()),
-                Headers = apiFarm.Headers,
-                StatusCode = apiFarm.Status
+                //Headers = Headers().ToObject<Dictionary<string, string>>(),
+                Headers = headers,
+                Body = body.ToString(),
+                StatusCode = statusCode
+                
             };
         }
 

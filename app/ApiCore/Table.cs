@@ -2,17 +2,20 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ApiFarm
+namespace ApiCore
 {
     public class Table
     {
         public readonly List<Field> AllFields;
         public readonly string TableName;
+        public string InvalidField = "";
+        public bool QueryActive;
 
         public Table(string tableName, string fieldTextString)
         {
             TableName = tableName;
             AllFields = new List<Field>();
+            QueryActive = false;
 
             string[] fieldArray = fieldTextString.Split(',');
 
@@ -65,18 +68,46 @@ namespace ApiFarm
         public string FieldTextString { get; }
 
 
-        public bool IsField(string fieldName)
+        private bool IsField(string fieldName)
         {
             return AllFields.Any(field => field.Name == fieldName);
         }
 
-        public bool SetFieldQuery(string fieldName, string value)
+        public bool IsQueryValid(IReadOnlyCollection<(string, string)> query)
+        {
+            // compare the query string columns to the table definition
+            // throw query out if column names do not match
+
+            if (query == null || query.Count == 0) return true;
+
+            foreach (var (fieldName, value) in query)
+            {
+                if (IsField(fieldName))
+                {
+                    // valid column found, so add value and activate query
+                    SetFieldQuery(fieldName, value);
+                }
+                else
+                {
+                    InvalidField = fieldName;
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+
+        private void SetFieldQuery(string fieldName, string value)
         {
             Field fieldFound = AllFields.Find(field => field.Name == fieldName);
 
-            if (fieldFound == null) return false;
+            if (fieldFound == null) return;
 
             fieldFound.QueryActive = true;
+
+            // flag an active query at table level
+            QueryActive = true;
 
             // remove quoted fields and rely on table definitions
 
@@ -91,8 +122,6 @@ namespace ApiFarm
             {
                 fieldFound.QueryValue = value;
             }
-
-            return true;
         }
     }
 

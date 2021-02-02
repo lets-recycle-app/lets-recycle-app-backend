@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ApiFarm\ApiFarm.csproj" />
+    <ProjectReference Include="..\ApiCore\ApiCore.csproj" />
   </ItemGroup>
 
 </Project>
