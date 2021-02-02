@@ -1,7 +1,8 @@
+using System;
+using System.Collections.Generic;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.SystemTextJson;
-using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using static ApiCore.Main;
 
@@ -13,14 +14,27 @@ namespace ApiLambda
     {
         public APIGatewayProxyResponse Api(APIGatewayProxyRequest request)
         {
+            
+            
             var headers = new Dictionary<string, string>
             {
                 {"Content-Type", "application/json"},
-                {"Access-Control-Allow-Origin", "*"}
-            }; 
-            
-            JObject body=Body(request.HttpMethod, FullEndpoint(request));
+                {"Access-Control-Allow-Origin", "*"},
+                {"Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS"},
+                {
+                    "Access-Control-Allow-Headers",
+                    "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With"
+                },
+                {"Access-Control-Max-Age", "86400"},
+                {"X-Requested-With", "*"}
+            };
+
+            JObject body = Body(request.HttpMethod, FullEndpoint(request));
             int statusCode = int.Parse(body["status"].ToString());
+
+            Console.WriteLine($"POST {request.Body}");
+            Console.WriteLine($"DEBUG {request.Resource}");
+            
             return new APIGatewayProxyResponse
             {
                 //Headers = Headers().ToObject<Dictionary<string, string>>(),

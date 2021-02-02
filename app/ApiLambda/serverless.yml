@@ -30,3 +30,17 @@ functions:
       - http:
           method: any
           path: /{api+}
+          cors:
+            origins:
+              - https://*.virginm.net
+              - https://lets-recycle-app.github.io
+              - http://*.virginm.net
+              - http://lets-recycle-app.github.io
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
