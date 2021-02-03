@@ -69,7 +69,7 @@ create table addresses (
     postcode varchar(8) not null,          /* a valid postcode */
     customerName varchar(50) not null,      /* free format customer name */
     customerEmail varchar(100) not null,    /* customer email address */
-    locationType varchar(10) not null,      /* "private" or "public" address type */  
+    locationType varchar(30) not null,      /* "private" or "public" address type */  
     fullAddress varchar(100) not null,      /* free format address details */
     houseNo varchar(10) not null,           /* house or building number */
     street varchar(50) not null,            /* street name */
