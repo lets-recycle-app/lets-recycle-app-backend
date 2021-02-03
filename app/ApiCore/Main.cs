@@ -1,26 +1,31 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.Linq;
+using Amazon.Lambda.APIGatewayEvents;
 using Newtonsoft.Json.Linq;
 
 namespace ApiCore
 {
     public static class Main
     {
-        private const int Limit = 1000;
+        private const int DataRowReturnLimit = 1000;
+        private static int ApiStatusCode { get; set; }
 
-        public static JObject Body(string httpMethod, string endPoint)
+        public static string Body(APIGatewayProxyRequest request)
         {
-            (string action, (string, string)[] query) = ProcessEndPointPath(endPoint);
+            string action = request.Path.Replace("/api/", "").Replace("%20", "");
 
-            return httpMethod switch
+            IDictionary<string, string> query = request.QueryStringParameters;
+            ApiStatusCode = 210;
+
+            return request.HttpMethod switch
             {
                 "GET" => ApiGet(action, query),
                 "POST" => ApiPost(action),
-                _ => Result(400, "error, invalid service [{httpMethod}]", 0, null)
+                _ => Result(211, "error, invalid http method [{httpMethod}]", 0, null)
             };
         }
 
-        private static JObject ApiGet(string action, (string, string)[] query)
+        private static string ApiGet(string action, IDictionary<string, string> query)
         {
             if (action == "collect-request")
             {
@@ -31,29 +36,29 @@ namespace ApiCore
 
             if (tableDesc == null)
             {
-                return Result(400, "error, service not supported [GET]", 0, null);
+                return Result(212, "error, service not supported [GET]", 0, null);
             }
 
             if (!tableDesc.IsQueryValid(query))
             {
-                return Result(403, $"Invalid field name {tableDesc.InvalidField}", 0, null);
+                return Result(213, $"invalid field name <{tableDesc.InvalidField}>", 0, null);
             }
 
-            return Database.Execute(ConstructSql(tableDesc));
+            return Database.GetSqlSelect(ConstructSql(tableDesc));
         }
 
 
-        private static JObject ApiPost(string action)
+        private static string ApiPost(string action)
         {
             return action switch
             {
                 "collect-confirm" => Collect.Confirm(),
                 "collect-update" => Collect.Update(),
                 "collect-cancel" => Collect.Cancel(),
-                _ => Result(400, "error, service not supported [POST]", 0, null)
+                _ => Result(214, "error, service not supported [POST]", 0, null)
             };
         }
-        
+
         private static string ConstructSql(Table table)
         {
             string sqlText = "";
@@ -86,109 +91,10 @@ namespace ApiCore
                 }
             }
 
-            sqlText += $" limit {Limit}";
+            sqlText += $" limit {DataRowReturnLimit}";
 
             return sqlText;
         }
-
-
-        private static (string, (string, string)[]) ProcessEndPointPath(string endPoint)
-        {
-            const int maxQueries = 10;
-            const string querySeparator = "?";
-
-            (string, string)[] queryArray = new (string, string)[maxQueries];
-
-            // after filtering for the last ~/api/
-            // only process the first subsequent path.
-            // the extended paths are available if required. 
-
-            string fullSegment = PathSplit(endPoint)[0].Trim();
-
-
-            if (!fullSegment.Contains(querySeparator))
-            {
-                // no queries specified only a single action instruction/tableName
-                return (fullSegment, null);
-            }
-
-
-            // split fullSegment into action?query
-
-            string[] split = fullSegment.Split(querySeparator);
-            string actionSegment = split[0].Trim();
-            string querySegment = split[1].Trim();
-
-
-            int count = 0;
-
-            if (querySegment.Length > 0)
-            {
-                string[] splitAndClauses = querySegment.Split('&');
-
-                foreach (var keyValue in splitAndClauses)
-                {
-                    string[] equalClause = keyValue.Split('=');
-
-                    if (equalClause.Length != 2) continue;
-                    queryArray[count].Item1 = equalClause[0].Trim();
-                    queryArray[count].Item2 = equalClause[1].Trim();
-                    count += 1;
-                }
-            }
-
-            Array.Resize(ref queryArray, count);
-
-            return (actionSegment, queryArray);
-        }
-
-        private static string[] PathSplit(string endPoint)
-        {
-            // expect the REST endpoint in the form of
-            // ~/api/{service}/{options+}
-            // only process paths after /api and
-            // return an array with the service in index 0
-            // and subsequent options from index 1...
-
-
-            const int maxPaths = 4;
-            string[] pathList = new string[maxPaths];
-
-            for (int i = 0; i < maxPaths; i++)
-            {
-                // initialise so that paths are never null
-                pathList[i] = "_none_";
-            }
-
-
-            string[] pathSplit = endPoint.Split('/');
-
-            int pathCount = 0;
-
-            foreach (string thisPathDir in pathSplit)
-            {
-                if (thisPathDir == "api")
-                {
-                    // only start reading options from the
-                    // /api encountered
-
-                    pathCount = 1;
-
-                    for (int i = 0; i < maxPaths; i++)
-                    {
-                        pathList[i] = "_none_";
-                    }
-                }
-                else if (pathCount > 0 && pathCount < maxPaths && thisPathDir.Length > 0)
-                {
-                    pathList[pathCount - 1] = thisPathDir;
-                    pathCount += 1;
-                }
-            }
-
-            return pathList;
-        }
-
 
         private static Table IsValidTable(string action)
         {
@@ -216,33 +122,47 @@ namespace ApiCore
             return tableDesc;
         }
 
-        public static JObject Result(int status, string message, int count, JArray data)
+        public static string Result(int status, string message, int count, JArray data)
         {
             data ??= new JArray();
+            ApiStatusCode = status;
+
             JObject response = new JObject
             {
                 {"status", status},
                 {"message", message},
-                {"count", count},
-                {"limit", Limit},
-                {"result", data}
+                {"count", count}
             };
 
-            return response;
+            if (count >= DataRowReturnLimit)
+            {
+                response["limit"] = DataRowReturnLimit;
+            }
+
+            response["result"] = data;
+
+            return response.ToString();
         }
 
-        public static JObject Headers()
+        public static IDictionary<string, string> Headers()
         {
-            return new JObject
+            return new Dictionary<string, string>
             {
+                {"Content-Type", "application/json"},
+                {"Access-Control-Allow-Origin", "*"},
+                {"Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS"},
                 {
-                    "headers", new JObject
-                    {
-                        {"Content-Type", "application/json"},
-                        {"Access-Control-Allow-Origin", "*"}
-                    }
-                }
+                    "Access-Control-Allow-Headers",
+                    "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With"
+                },
+                {"Access-Control-Max-Age", "86400"},
+                {"X-Requested-With", "*"}
             };
+        }
+
+        public static int StatusCode()
+        {
+            return ApiStatusCode;
         }
     }
 }

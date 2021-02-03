@@ -68,12 +68,7 @@ namespace ApiCore
         public string FieldTextString { get; }
 
 
-        private bool IsField(string fieldName)
-        {
-            return AllFields.Any(field => field.Name == fieldName);
-        }
-
-        public bool IsQueryValid(IReadOnlyCollection<(string, string)> query)
+        public bool IsQueryValid(IDictionary<string, string> query)
         {
             // compare the query string columns to the table definition
             // throw query out if column names do not match
@@ -82,14 +77,18 @@ namespace ApiCore
 
             foreach (var (fieldName, value) in query)
             {
-                if (IsField(fieldName))
+                string fieldNameTrim = fieldName.Trim();
+                fieldNameTrim = fieldNameTrim.Replace("\"", "");
+                fieldNameTrim = fieldNameTrim.Replace("'", "");
+
+                if (IsFieldValid(fieldNameTrim))
                 {
                     // valid column found, so add value and activate query
-                    SetFieldQuery(fieldName, value);
+                    SetFieldQuery(fieldNameTrim, value);
                 }
                 else
                 {
-                    InvalidField = fieldName;
+                    InvalidField = fieldNameTrim;
                     return false;
                 }
             }
@@ -97,6 +96,10 @@ namespace ApiCore
             return true;
         }
 
+        private bool IsFieldValid(string fieldName)
+        {
+            return AllFields.Any(field => field.Name == fieldName);
+        }
 
         private void SetFieldQuery(string fieldName, string value)
         {
@@ -111,6 +114,7 @@ namespace ApiCore
 
             // remove quoted fields and rely on table definitions
 
+            value = value.Trim();
             value = value.Replace("\"", "");
             value = value.Replace("'", "");
 

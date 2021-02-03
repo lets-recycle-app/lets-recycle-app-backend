@@ -35,7 +35,7 @@ namespace ApiCore
             }
         }
 
-        public static JObject Execute(string sqlText)
+        public static string GetSqlSelect(string sqlText)
         {
             if (!Connect())
             {
@@ -72,7 +72,7 @@ namespace ApiCore
                     tableData.Add(row);
                 }
 
-                return Main.Result(200, "OK", tableData.Count, tableData);
+                return Main.Result(tableData.Count > 0 ? 200 : 201, "OK", tableData.Count, tableData);
             }
             catch
             {

@@ -1,32 +1,26 @@
 ﻿using System;
+using System.Collections.Generic;
 using static ApiCore.Main;
+using Amazon.Lambda.APIGatewayEvents;
 
 namespace ApiTest
 {
     internal static class ApiTest
     {
-        private static int Main(string[] args)
+        private static int Main()
         {
-            if (args.Length != 1)
+            var request = new APIGatewayProxyRequest()
             {
-                Console.WriteLine("Usage: ApiTest ~/api/{service}?{key}={value}");
-                return 1;
-            }
-
-            string endPoint = args[0];
-            string httpMethod = "GET";
-
-
-            //endPoint = "https://f4d7ipwknd.execute-api.eu-west-2.amazonaws.com/api/depots?depotId=1";
-            //endPoint = "/dev/api/postcodes? postcode = CH43 8TJ";
-
+                Body = "{\"locationType\": \"private property\",\"customerName\": \"Jane Newman\",\"customerEmail\": \"aaa@aa.aa\",\"itemType\": \"washer\",\"houseNo\": \"12\",\"street\": \"Some St\", \"townAddress\": \"Sometown\", \"postcode\": \"sk1 2lg\",\"notes\": \"lorem ipsum dolor sit amet\"}",
+                Path = "/api/depots",
+                HttpMethod = "GET",
+                
+                QueryStringParameters = new Dictionary<string, string>(){
+                    {"depotId", "3"}
+                }
+            };
             
-            //endPoint = "/dev/api/depots?depotId=2&fleetSize=13";
-            endPoint = "/dev/api/collect-request";
-            httpMethod = "GET";
-            
-            Console.WriteLine(Headers());
-            Console.WriteLine(Body(httpMethod, endPoint));
+            Console.WriteLine(Body(request));
 
             return 0;
         }

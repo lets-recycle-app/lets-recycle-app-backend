@@ -9,7 +9,7 @@ namespace ApiCore
     {
         private static readonly Random Random = new Random();
 
-        public static JObject Request()
+        public static string Request()
         {
             JArray dates = GetCollectionDates();
 
@@ -19,10 +19,10 @@ namespace ApiCore
                 : Result(200, $"{dates.Count} collection dates available", dates.Count, dates);
         }
 
-        public static JObject Confirm()
+        public static string Confirm()
         {
-
-            JObject admins = Database.Execute("select * from admins");
+            /*
+            JObject admins = Database.GetSqlSelect("select * from admins");
 
             admins["status"] = 201;
             admins["message"] = "confirm created!";
@@ -31,15 +31,17 @@ namespace ApiCore
 
             //dynamic depotObj = JObject.Parse(admins.ToString());
 
-            return admins;
+            return admins.ToString();
+            */
+            return "";
         }
 
-        public static JObject Update()
+        public static string Update()
         {
             return Result(201, "collection update", 0, null);
         }
 
-        public static JObject Cancel()
+        public static string Cancel()
         {
             Console.WriteLine("Collection Cancel");
             return Result(201, "collection cancelled", 0, null);
