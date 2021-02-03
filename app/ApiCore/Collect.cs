@@ -13,38 +13,53 @@ namespace ApiCore
         {
             JArray dates = GetCollectionDates();
 
-
             return dates.Count == 0
-                ? Result(200, "no collection dates available", 0, dates)
-                : Result(200, $"{dates.Count} collection dates available", dates.Count, dates);
+                ? Result(200, "no collection dates available", dates)
+                : Result(200, $"{dates.Count} collection dates available", dates);
         }
 
-        public static string Confirm()
+        public static string Confirm(string body)
         {
-            /*
-            JObject admins = Database.GetSqlSelect("select * from admins");
+            JObject admins = JObject.Parse(Database.GetSqlSelect("select * from admins"));
+            JObject newAddress = JObject.Parse(body);
 
-            admins["status"] = 201;
+            string itemType = newAddress["itemType"].ToString();
+            newAddress.Remove("itemType");
+
+            admins["status"] = 202;
             admins["message"] = "confirm created!";
             admins["count"] = admins.Count;
-            admins["result"] = new JArray();
+            admins["result"] = newAddress;
 
-            //dynamic depotObj = JObject.Parse(admins.ToString());
+
+            Table tableDesc = IsValidTable("addresses");
+
+            if (tableDesc == null)
+            {
+                return Result(212, "collect-confirm internal error", null);
+            }
+
+            if (!tableDesc.IsFieldListValid(newAddress.ToObject<Dictionary<string, string>>()))
+            {
+                return Result(213, $"invalid field name <{tableDesc.InvalidField}>", null);
+            }
+
+            string sqlText = ConstructSqlInsert(tableDesc);
+
+            Console.WriteLine(sqlText);
 
             return admins.ToString();
-            */
-            return "";
         }
 
         public static string Update()
         {
-            return Result(201, "collection update", 0, null);
+            return Result(201, "collection update", null);
         }
 
         public static string Cancel()
         {
             Console.WriteLine("Collection Cancel");
-            return Result(201, "collection cancelled", 0, null);
+            return Result(201, "collection cancelled", null);
         }
 
 

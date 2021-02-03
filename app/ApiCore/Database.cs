@@ -21,7 +21,6 @@ namespace ApiCore
 
             _connectString = $"server={host}; port={port}; database={database}; user={user}; password={password}";
 
-
             try
             {
                 _mySql = new MySqlConnection(_connectString);
@@ -39,7 +38,7 @@ namespace ApiCore
         {
             if (!Connect())
             {
-                return Main.Result(501, "failed to connect to the database", 0, null);
+                return Main.Result(501, "failed to connect to the database", null);
             }
 
             MySqlCommand sqlCommand = new MySqlCommand(sqlText, _mySql);
@@ -72,7 +71,7 @@ namespace ApiCore
                     tableData.Add(row);
                 }
 
-                return Main.Result(tableData.Count > 0 ? 200 : 201, "OK", tableData.Count, tableData);
+                return Main.Result(tableData.Count > 0 ? 200 : 201, "OK", tableData);
             }
             catch
             {
@@ -81,7 +80,7 @@ namespace ApiCore
 
             _mySql?.Close();
 
-            return Main.Result(502, "error, internal sql failed", 0, null);
+            return Main.Result(502, "error, internal sql failed", null);
         }
     }
 }

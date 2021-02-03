@@ -20,8 +20,8 @@ namespace ApiCore
             return request.HttpMethod switch
             {
                 "GET" => ApiGet(action, query),
-                "POST" => ApiPost(action),
-                _ => Result(211, "error, invalid http method [{httpMethod}]", 0, null)
+                "POST" => ApiPost(action, request.Body),
+                _ => Result(211, "error, invalid http method [{httpMethod}]", null)
             };
         }
 
@@ -36,42 +36,42 @@ namespace ApiCore
 
             if (tableDesc == null)
             {
-                return Result(212, "error, service not supported [GET]", 0, null);
+                return Result(212, "error, service not supported [GET]", null);
             }
 
-            if (!tableDesc.IsQueryValid(query))
+            if (!tableDesc.IsFieldListValid(query))
             {
-                return Result(213, $"invalid field name <{tableDesc.InvalidField}>", 0, null);
+                return Result(213, $"invalid field name <{tableDesc.InvalidField}>", null);
             }
 
-            return Database.GetSqlSelect(ConstructSql(tableDesc));
+            return Database.GetSqlSelect(ConstructSqlSelect(tableDesc));
         }
 
 
-        private static string ApiPost(string action)
+        private static string ApiPost(string action, string body)
         {
             return action switch
             {
-                "collect-confirm" => Collect.Confirm(),
+                "collect-confirm" => Collect.Confirm(body),
                 "collect-update" => Collect.Update(),
                 "collect-cancel" => Collect.Cancel(),
-                _ => Result(214, "error, service not supported [POST]", 0, null)
+                _ => Result(214, "error, service not supported [POST]", null)
             };
         }
 
-        private static string ConstructSql(Table table)
+        private static string ConstructSqlSelect(Table table)
         {
             string sqlText = "";
 
-            sqlText += $"select {table.FieldTextString} from {table.TableName}";
+            sqlText += $"select {table.FieldSelectString} from {table.TableName}";
 
-            if (table.QueryActive)
+            if (table.FieldsActive)
             {
                 sqlText += " where ";
 
                 int clauseCount = 0;
 
-                foreach (var field in table.AllFields.Where(field => field.QueryActive))
+                foreach (var field in table.AllFields.Where(field => field.FieldActive))
                 {
                     if (clauseCount >= 1)
                     {
@@ -80,11 +80,11 @@ namespace ApiCore
 
                     if (field.FieldType == "date")
                     {
-                        sqlText += $"date_format({field.Name},'%Y-%m-%d') = '{field.QueryValue}'";
+                        sqlText += $"date_format({field.Name},'%Y-%m-%d') = '{field.FieldValue}'";
                     }
                     else
                     {
-                        sqlText += $"{field.Name} = {field.QueryValue}";
+                        sqlText += $"{field.Name} = {field.FieldValue}";
                     }
 
                     clauseCount += 1;
@@ -96,7 +96,58 @@ namespace ApiCore
             return sqlText;
         }
 
-        private static Table IsValidTable(string action)
+        public static string ConstructSqlInsert(Table table)
+        {
+            string sqlText = "";
+
+            int fieldCount = 0;
+
+            sqlText += $"insert into {table.TableName} (";
+
+            foreach (var field in table.AllFields.Where(field => field.FieldActive))
+            {
+                // get the active fields in the correct order 
+
+                if (fieldCount > 0)
+                {
+                    sqlText += ", ";
+                }
+
+                sqlText += field.Name;
+
+                fieldCount += 1;
+            }
+
+            sqlText += ") values (";
+
+            int clauseCount = 0;
+
+            foreach (var field in table.AllFields.Where(field => field.FieldActive))
+            {
+                if (clauseCount >= 1)
+                {
+                    sqlText += " , ";
+                }
+
+                if (field.FieldType == "date")
+                {
+                    sqlText += $"date_format({field.Name},'%Y-%m-%d') = '{field.FieldValue}'";
+                }
+                else
+                {
+                    sqlText += $"{field.FieldValue}";
+                }
+
+                clauseCount += 1;
+            }
+
+            sqlText += ")";
+
+            return sqlText;
+        }
+
+
+        public static Table IsValidTable(string action)
         {
             Table tableDesc = action switch
             {
@@ -122,7 +173,7 @@ namespace ApiCore
             return tableDesc;
         }
 
-        public static string Result(int status, string message, int count, JArray data)
+        public static string Result(int status, string message, JArray data)
         {
             data ??= new JArray();
             ApiStatusCode = status;
@@ -131,10 +182,10 @@ namespace ApiCore
             {
                 {"status", status},
                 {"message", message},
-                {"count", count}
+                {"count", data.Count}
             };
 
-            if (count >= DataRowReturnLimit)
+            if (data.Count >= DataRowReturnLimit)
             {
                 response["limit"] = DataRowReturnLimit;
             }

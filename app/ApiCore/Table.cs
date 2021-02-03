@@ -8,18 +8,18 @@ namespace ApiCore
     {
         public readonly List<Field> AllFields;
         public readonly string TableName;
+        public bool FieldsActive;
         public string InvalidField = "";
-        public bool QueryActive;
 
         public Table(string tableName, string fieldTextString)
         {
             TableName = tableName;
             AllFields = new List<Field>();
-            QueryActive = false;
+            FieldsActive = false;
 
             string[] fieldArray = fieldTextString.Split(',');
 
-            int fieldCount = 0;
+            int fieldSelectCount = 0;
 
             foreach (string fieldName in fieldArray)
             {
@@ -47,35 +47,36 @@ namespace ApiCore
                 // remove spaces from field list
                 // and set field type
 
-                if (fieldCount > 0)
+                if (fieldSelectCount > 0)
                 {
-                    FieldTextString += ", ";
+                    FieldSelectString += ", ";
                 }
 
                 if (fieldType == "date")
                 {
-                    FieldTextString += $"date_format({fieldNameTrim},'%Y-%m-%d') as {fieldNameTrim}";
+                    FieldSelectString += $"date_format({fieldNameTrim},'%Y-%m-%d') as {fieldNameTrim}";
                 }
                 else
                 {
-                    FieldTextString += $"{fieldNameTrim}";
+                    FieldSelectString += $"{fieldNameTrim}";
                 }
 
-                fieldCount += 1;
+                fieldSelectCount += 1;
             }
         }
 
-        public string FieldTextString { get; }
+        public string FieldSelectString { get; }
 
 
-        public bool IsQueryValid(IDictionary<string, string> query)
+        public bool IsFieldListValid(IDictionary<string, string> fieldDict)
         {
             // compare the query string columns to the table definition
             // throw query out if column names do not match
 
-            if (query == null || query.Count == 0) return true;
 
-            foreach (var (fieldName, value) in query)
+            if (fieldDict == null || fieldDict.Count == 0) return true;
+
+            foreach (var (fieldName, value) in fieldDict)
             {
                 string fieldNameTrim = fieldName.Trim();
                 fieldNameTrim = fieldNameTrim.Replace("\"", "");
@@ -84,7 +85,8 @@ namespace ApiCore
                 if (IsFieldValid(fieldNameTrim))
                 {
                     // valid column found, so add value and activate query
-                    SetFieldQuery(fieldNameTrim, value);
+
+                    SetFieldValues(fieldNameTrim, value);
                 }
                 else
                 {
@@ -101,16 +103,16 @@ namespace ApiCore
             return AllFields.Any(field => field.Name == fieldName);
         }
 
-        private void SetFieldQuery(string fieldName, string value)
+        private void SetFieldValues(string fieldName, string value)
         {
             Field fieldFound = AllFields.Find(field => field.Name == fieldName);
 
             if (fieldFound == null) return;
 
-            fieldFound.QueryActive = true;
+            fieldFound.FieldActive = true;
 
             // flag an active query at table level
-            QueryActive = true;
+            FieldsActive = true;
 
             // remove quoted fields and rely on table definitions
 
@@ -120,11 +122,11 @@ namespace ApiCore
 
             if (fieldFound.FieldType == "string")
             {
-                fieldFound.QueryValue = "\"" + value + "\"";
+                fieldFound.FieldValue = "\"" + value + "\"";
             }
             else
             {
-                fieldFound.QueryValue = value;
+                fieldFound.FieldValue = value;
             }
         }
     }
@@ -135,13 +137,13 @@ namespace ApiCore
         {
             Name = name;
             FieldType = fieldType;
-            QueryValue = "";
-            QueryActive = false;
+            FieldValue = "";
+            FieldActive = false;
         }
 
         public string Name { get; }
         public string FieldType { get; }
-        public string QueryValue { get; set; }
-        public bool QueryActive { get; set; }
+        public string FieldValue { get; set; }
+        public bool FieldActive { get; set; }
     }
 }
