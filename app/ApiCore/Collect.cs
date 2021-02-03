@@ -20,23 +20,36 @@ namespace ApiCore
 
         public static string Confirm(string body)
         {
-            JObject admins = JObject.Parse(Database.GetSqlSelect("select * from admins"));
-            JObject newAddress = JObject.Parse(body);
+            Table tableDesc;
+            JObject newAddress;
+            string itemType = "";
 
-            string itemType = newAddress["itemType"].ToString();
-            newAddress.Remove("itemType");
-
-            admins["status"] = 202;
-            admins["message"] = "confirm created!";
-            admins["count"] = admins.Count;
-            admins["result"] = newAddress;
-
-
-            Table tableDesc = IsValidTable("addresses");
-
-            if (tableDesc == null)
+            try
             {
-                return Result(212, "collect-confirm internal error", null);
+                newAddress = JObject.Parse(body);
+
+                if (newAddress["itemType"] != null)
+                {
+                    itemType = newAddress["itemType"].ToString();
+                    newAddress.Remove("itemType");
+                }
+
+                if (newAddress["postcode"] != null)
+                {
+                    newAddress["postcode"] = newAddress["postcode"].ToString().ToUpper();
+                }
+
+
+                tableDesc = IsValidTable("addresses");
+
+                if (tableDesc == null)
+                {
+                    return Result(212, "collect-confirm internal error", null);
+                }
+            }
+            catch
+            {
+                return Result(217, "collect-confirm internal error", null);
             }
 
             if (!tableDesc.IsFieldListValid(newAddress.ToObject<Dictionary<string, string>>()))
@@ -46,9 +59,23 @@ namespace ApiCore
 
             string sqlText = ConstructSqlInsert(tableDesc);
 
-            Console.WriteLine(sqlText);
+            JObject sqlId = JObject.Parse(Database.SqlTransaction(sqlText));
 
-            return admins.ToString();
+            try
+            {
+                int addressId = int.Parse(sqlId["result"][0]["insertId"].ToString());
+
+                newAddress["addressId"] = addressId;
+                return Result(200, $"collection confirmed with address {{'addressId': {addressId}}}",
+                    new JArray {newAddress});
+            }
+            catch
+            {
+                newAddress["addressId"] = -1;
+            }
+
+
+            return Result(230, "collection not confirmed, address database insert failure", new JArray {newAddress});
         }
 
         public static string Update()
@@ -58,7 +85,6 @@ namespace ApiCore
 
         public static string Cancel()
         {
-            Console.WriteLine("Collection Cancel");
             return Result(201, "collection cancelled", null);
         }
 

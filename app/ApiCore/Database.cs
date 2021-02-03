@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
 
@@ -81,6 +82,49 @@ namespace ApiCore
             _mySql?.Close();
 
             return Main.Result(502, "error, internal sql failed", null);
+        }
+
+        public static string SqlTransaction(string sqlText)
+        {
+            if (!Connect())
+            {
+                return Main.Result(501, "failed to connect to the database", null);
+            }
+
+            MySqlTransaction sqlTransaction = _mySql.BeginTransaction();
+            MySqlCommand sqlCommand = new MySqlCommand(sqlText, _mySql);
+            JArray txArray = new JArray {new JObject {{"insertId", -1}}};
+            
+            try
+            {
+                sqlCommand.ExecuteNonQuery();
+                sqlTransaction.Commit();
+
+                MySqlCommand sqlCommandId = new MySqlCommand("select last_insert_id()",_mySql);
+                MySqlDataReader reader = sqlCommandId.ExecuteReader();
+                
+                reader.Read();
+                
+                txArray[0]["insertId"] = reader.GetInt32(0);
+
+                reader.Close();
+                
+                return Main.Result(200, "OK", txArray);
+            }
+            catch
+            {
+                try
+                {
+                    sqlTransaction.Rollback();
+                }
+                catch
+                {
+                    return Main.Result(250, "error, internal sql rollback failed", null);
+                }
+            }
+
+            _mySql?.Close();
+            return Main.Result(251, "error, internal sql transaction failed", null);
         }
     }
 }
