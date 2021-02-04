@@ -71,7 +71,6 @@ namespace ApiCore
                         }
                     }
 
-
                     tableData.Add(row);
                 }
 
