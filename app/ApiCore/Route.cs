@@ -8,8 +8,8 @@ namespace ApiCore
     public static class Route
     {
         private static readonly Random Random = new Random();
-        static double singleKMX = 0.01453433399999998;
-        static double singleKMY = 0.00898315300000263;
+        static decimal singleKMX = (decimal) 0.01453433399999998;
+        static decimal singleKMY = (decimal) 0.00898315300000263;
 
         private static (decimal, decimal) NudgeGeo(double distanceKm, double angle, decimal latitude, decimal longitude)
         {
@@ -41,11 +41,8 @@ namespace ApiCore
             {
                 Console.WriteLine($"<{pair.Key}>, <{pair.Value}>");
             }
-
-
+            
             List<StopData> postCodeList = new List<StopData>();
-            
-            
 
             if (query.Count > 0)
             {
@@ -163,7 +160,7 @@ namespace ApiCore
             List<StopData> stopsList = new List<StopData>();
 
             string depotPostCode = depotRow["postcode"].ToString();
-            string sqlText = $"select latitude, longitude from postcodes where postcode = '{depotPostCode}'";
+            string sqlText = $"select latitude, longitude from postcodes where postcode = '{depotPostCode}' limit 1";
             
             JObject geolocation = JObject.Parse(Database.GetSqlSelect(sqlText));
             JToken result = geolocation["result"];
@@ -248,6 +245,18 @@ namespace ApiCore
                 longitude = newLong;
                 
                 // now find a nearby postcode
+                
+                sqlText = $"select postcode from postcodes where (latitude between {latitude-singleKMY} and {latitude+singleKMY}) and (longitude between {longitude-singleKMX} and {longitude+singleKMX}) limit 1";
+                JObject newGeoArea = JObject.Parse(Database.GetSqlSelect(sqlText));
+                result = newGeoArea["result"];
+
+                if (result.HasValues)
+                {
+                    stop.PostCode = result[0]["postcode"].ToString();
+                    stop.RowDetails["postcode"] = stop.PostCode;
+                }
+
+                Console.WriteLine(stop.RowDetails);
                 
             }
 

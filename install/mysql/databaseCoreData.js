@@ -7,7 +7,7 @@ alter table depots auto_increment=1;
 
 insert into depots (depotName, postCode, fleetSize) 
 values
-('Horwich', 'HO1 8XJ', 26),
+('Horwich', 'BL6 4SD', 26),
 ('Stockport', 'M18 7TQ', 13),
 ('Liverpool', 'L1 1DA', 15),
 ('Dumfirmline', 'KY11 3AE', 11),
