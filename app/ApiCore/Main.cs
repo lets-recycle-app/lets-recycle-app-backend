@@ -30,6 +30,7 @@ namespace ApiCore
             {
                 "collect-request" => Collect.Request(),
                 "route-simulate" => Route.Simulate(query),
+                "route-distance" => Route.Distance(query),
                 _ => TableName.Get(action, query)
             };
         }
