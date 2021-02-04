@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 using static ApiCore.Main;
 
@@ -20,7 +22,6 @@ namespace ApiCore
 
         public static string Confirm(string body)
         {
-            Table tableDesc;
             JObject newAddress;
             string itemType = "";
 
@@ -38,32 +39,24 @@ namespace ApiCore
                 {
                     newAddress["postcode"] = newAddress["postcode"].ToString().ToUpper();
                 }
-
-
-                tableDesc = IsValidTable("addresses");
-
-                if (tableDesc == null)
-                {
-                    return Result(212, "collect-confirm internal error", null);
-                }
             }
             catch
             {
                 return Result(217, "collect-confirm internal error", null);
             }
 
-            if (!tableDesc.IsFieldListValid(newAddress.ToObject<Dictionary<string, string>>()))
+            JObject postInfo = JObject.Parse(TableName.Post("addresses", newAddress.ToObject<Dictionary<string, string>>()));
+            
+            if (postInfo["status"].ToString() != "200")
             {
-                return Result(213, $"invalid field name <{tableDesc.InvalidField}>", null);
+                return postInfo.ToString();
             }
-
-            string sqlText = ConstructSqlInsert(tableDesc);
-
-            JObject sqlId = JObject.Parse(Database.SqlTransaction(sqlText));
-
+            
             try
             {
-                int addressId = int.Parse(sqlId["result"][0]["insertId"].ToString());
+                Console.WriteLine(postInfo);
+                
+                int addressId = int.Parse(postInfo["result"][0]["insertId"].ToString());
 
                 newAddress["addressId"] = addressId;
                 return Result(200, $"collection confirmed with address {{'addressId': {addressId}}}",
