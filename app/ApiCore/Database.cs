@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
 
@@ -57,17 +56,21 @@ namespace ApiCore
                     {
                         if (reader.GetFieldType(i) == typeof(int))
                         {
-                            row.Add(reader.GetName(i), reader.GetInt32(i));
+                            int value = reader[i] as int? ?? default;
+                            row.Add(reader.GetName(i), value);
                         }
                         else if (reader.GetFieldType(i) == typeof(decimal))
                         {
-                            row.Add(reader.GetName(i), reader.GetDecimal(i));
+                            decimal value = reader[i] as decimal? ?? default;
+                            row.Add(reader.GetName(i), value);
                         }
                         else
                         {
-                            row.Add(reader.GetName(i), reader.GetString(i));
+                            string value = reader[i] as string;
+                            row.Add(reader.GetName(i), value);
                         }
                     }
+
 
                     tableData.Add(row);
                 }
@@ -94,21 +97,21 @@ namespace ApiCore
             MySqlTransaction sqlTransaction = _mySql.BeginTransaction();
             MySqlCommand sqlCommand = new MySqlCommand(sqlText, _mySql);
             JArray txArray = new JArray {new JObject {{"insertId", -1}}};
-            
+
             try
             {
                 sqlCommand.ExecuteNonQuery();
                 sqlTransaction.Commit();
 
-                MySqlCommand sqlCommandId = new MySqlCommand("select last_insert_id()",_mySql);
+                MySqlCommand sqlCommandId = new MySqlCommand("select last_insert_id()", _mySql);
                 MySqlDataReader reader = sqlCommandId.ExecuteReader();
-                
+
                 reader.Read();
-                
+
                 txArray[0]["insertId"] = reader.GetInt32(0);
 
                 reader.Close();
-                
+
                 return Main.Result(200, "OK", txArray);
             }
             catch
