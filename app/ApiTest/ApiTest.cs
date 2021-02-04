@@ -13,8 +13,8 @@ namespace ApiTest
             {
                 Body =
                     "{\"locationType\": \"private property\",\"customerName\": \"Danny Jones\",\"customerEmail\": \"aaa@aa.aa\",\"itemType\": \"washer\",\"houseNo\": \"12\",\"street\": \"Some St\", \"townAddress\": \"Sometown\", \"postcode\": \"AL5 3EJ\",\"notes\": \"lorem ipsum dolor sit amet\"}",
-                //Path = "/api/route-simulate",
-                Path = "/api/route-distance",
+                Path = "/api/route-simulate",
+                //Path = "/api/route-distance",
                 HttpMethod = "GET",
 
                 QueryStringParameters = new Dictionary<string, string>

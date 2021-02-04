@@ -92,4 +92,5 @@ create table if not exists postcodes (
 );
 
 alter table postcodes auto_increment=1;
+create index postcode_idx on postcodes (postcode);
 `;
