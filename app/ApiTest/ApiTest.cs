@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Amazon.Lambda.APIGatewayEvents;
+using static ApiCore.Main;
 
 namespace ApiTest
 {
@@ -24,12 +25,12 @@ namespace ApiTest
                         {"depotId", depotId.ToString()},
                         {"dayNo", dayNo.ToString()}
                     }
+                    
                 };
 
-                Console.WriteLine(request.QueryStringParameters["depotId"]+" , "+request.QueryStringParameters["dayNo"]);
                 Console.WriteLine(Body(request));
+                
             }
-
 
             return 0;
         }

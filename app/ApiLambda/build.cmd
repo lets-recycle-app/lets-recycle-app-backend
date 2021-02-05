@@ -6,4 +6,4 @@ dotnet lambda package
 if errorlevel 1 (
    exit /b %errorlevel%
 )
-sls deploy --stage prod
+sls deploy --stage dev
