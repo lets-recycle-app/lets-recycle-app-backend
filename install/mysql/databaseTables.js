@@ -6,11 +6,12 @@ create table routes (
     driverId int not null,                  /* driver Id from table drivers */
     routeDate date not null,                /* route date */
     routeSeqNo int not null,                /* delivery or recycle seq no. in route 1,2,3,... */
+    distance decimal(12,4) not null,        /* distance to next stop */
     addressId int not null,                 /* address Id from table addresses */
     addressPostcode varchar(8) not null,    /* address postcode */
     latitude  decimal(12,9) not null,       /* latitude associated with the postcode */
     longitude decimal(12,9) not null,       /* longitude associated with the postcode */
-    routeAction varchar(10) not null,       /* deliver or recycle */
+    routeAction varchar(10) not null,       /* delivery or recycle */
     itemType varchar(30) not null,          /* fridge, freezer etc. */
     status varchar(10) not null,            /* pending, completed, failed */
     refNo  varchar(50) not null,            /* reference no supplied to customer */
@@ -91,7 +92,10 @@ create table if not exists postcodes (
   longitude decimal(12,9) not null,         /* longitude associated with the postcode */
   primary key (postcodeId)
 );
+`;
 
+export const createPostCodesIndex = `
 alter table postcodes auto_increment=1;
 create index postcode_idx on postcodes (postcode);
+create index postcode_idx2 on postcodes (latitude,longitude);
 `;

@@ -40,7 +40,7 @@ namespace ApiCore
             {
                 return Main.Result(501, "failed to connect to the database", null);
             }
-
+        
             MySqlCommand sqlCommand = new MySqlCommand(sqlText, _mySql);
             MySqlDataReader reader = sqlCommand.ExecuteReader();
 
@@ -93,6 +93,7 @@ namespace ApiCore
                 return Main.Result(501, "failed to connect to the database", null);
             }
 
+            Console.WriteLine(sqlText);
             MySqlTransaction sqlTransaction = _mySql.BeginTransaction();
             MySqlCommand sqlCommand = new MySqlCommand(sqlText, _mySql);
             JArray txArray = new JArray {new JObject {{"insertId", -1}}};

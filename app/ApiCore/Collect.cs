@@ -52,8 +52,6 @@ namespace ApiCore
             
             try
             {
-                Console.WriteLine(postInfo);
-                
                 int addressId = int.Parse(postInfo["result"][0]["insertId"].ToString());
 
                 newAddress["addressId"] = addressId;

@@ -11,7 +11,7 @@ namespace ApiCore
         {
             {
                 "addresses",
-                "addressId (int), postcode, customerName, customerEmail, locationType, fullAddress, houseNo, street, townAddress, notes"
+                "addressId (int), postcode, customerName, customerEmail, locationType, houseNo, street, townAddress, notes"
             },
             {
                 "admins",
@@ -31,7 +31,7 @@ namespace ApiCore
             },
             {
                 "routes",
-                "depotId (int), driverId (int), routeDate (date), routeSeqNo, addressId (int), addressPostcode, latitude (dec), longitude (dec), routeAction, itemType, status, refNo"
+                "depotId (int), driverId (int), routeDate (date), routeSeqNo (int), distance (dec), addressId (int), addressPostcode, latitude (dec), longitude (dec), routeAction, itemType, status, refNo"
             }
         };
         

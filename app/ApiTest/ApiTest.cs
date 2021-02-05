@@ -19,7 +19,7 @@ namespace ApiTest
 
                 QueryStringParameters = new Dictionary<string, string>
                 {
-                    {"depotId", "4"},
+                    {"depotId", "1"},
                     {"dayNo", "1"}
                 }
             };

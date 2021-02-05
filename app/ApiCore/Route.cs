@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Bogus;
 using Newtonsoft.Json.Linq;
 using static ApiCore.Main;
 
@@ -13,13 +14,15 @@ namespace ApiCore
 
         public static string Simulate(IDictionary<string, string> query)
         {
+            Randomizer.Seed = new Random(58932234);
+
             // accept a query that defines a depotId/dayNo
 
             int depotId = 0;
             int fleetSize = 0;
             string routeDate = GetFutureDate(1);
             string sqlText = "";
-            JObject sqlRow = null;
+            //JObject sqlRow = null;
 
             if (query.Count > 0)
             {
@@ -88,8 +91,9 @@ namespace ApiCore
 
             sqlText = $"select * from drivers where depotId = {depotId} order by rand() limit {noRoutesToday}";
             JToken allDrivers = Database.SqlMultiRow(sqlText);
-            
-            Database.SqlTransaction($"delete from routes where depotId = {depotId} and routeDate = str_to_date('{routeDate}','%Y-%m-%d')");
+
+            Database.SqlTransaction(
+                $"delete from routes where depotId = {depotId} and routeDate = str_to_date('{routeDate}','%Y-%m-%d')");
 
             foreach (var driverRow in allDrivers)
             {
@@ -202,7 +206,7 @@ namespace ApiCore
             foreach (JToken code in postCode["result"])
             {
                 return (true, decimal.Parse(code["latitude"]?.ToString() ?? string.Empty),
-                    decimal.Parse(code["longitude"].ToString()));
+                    decimal.Parse(code["longitude"]?.ToString()));
             }
 
             return (false, 0, 0);
@@ -245,10 +249,7 @@ namespace ApiCore
         private static bool SingleRoute(string date, JToken depotRow, JToken driverRow, decimal depotLat,
             decimal depotLong)
         {
-            List<StopData> stopsList = new List<StopData>();
-
-
-            string depotPostCode = depotRow["postcode"].ToString();
+            var depotPostCode = depotRow["postcode"].ToString();
 
             Console.WriteLine($"{depotRow["depotPostCode"]} {depotLat} {depotLong} {driverRow["driverName"]}");
 
@@ -258,24 +259,75 @@ namespace ApiCore
             decimal latitude = depotLat;
             decimal longitude = depotLong;
             int directionAngle = RandomNumber(0, 360);
+            int addressId = 0;
 
-            int noStops = RandomNumber(15, 27);
-            noStops = 10;
+            int noStops = RandomNumber(15, 20);
+            int collectionStart = noStops - RandomNumber(1, 4);
+
+            List<FakeCustomer> customers = GetFakeCustomers(noStops);
 
             for (int routeSeqNo = 0; routeSeqNo <= noStops; routeSeqNo += 1)
             {
+                string routeAction = "delivery";
+
+                if (routeSeqNo == 0)
+                {
+                    routeAction = "depot";
+                }
+                else if (routeSeqNo >= collectionStart)
+                {
+                    routeAction = "recycle";
+                }
+                
+                
+                if (routeSeqNo > 0)
+                {
+                    addressId = InsertNewAddress(stopPostCode, routeAction, customers[routeSeqNo - 1]);
+                }
+
+                // find the distance to the next route stop
+                
+                (string newPostCode, decimal newLatitude, decimal newLongitude) =
+                    GetNextPostCode(directionAngle, latitude, longitude);
+                
+                decimal distance = 0;
+                
+                if (newPostCode.Length > 0)
+                {
+                    stopPostCode = newPostCode;
+                    distance = HaversineDistance(latitude, longitude, newLatitude, newLongitude);
+                    latitude = newLatitude;
+                    longitude = newLongitude;
+                }
+                else
+                {
+                    // failed to find a new postcode, so keep delivery in the same area
+                    newLatitude = latitude;
+                    newLongitude = longitude;
+                }
+                
+
+                Console.WriteLine(distance);
+                
+                if (routeSeqNo == noStops)
+                {
+                    // last delivery/recycle collection has 
+                    // a distance of 0km to the next stop
+                    distance = 0;
+                }
+
                 JObject newRouteStop = new JObject
                 {
                     {"depotId", depotRow["depotId"]},
                     {"driverId", driverRow["driverId"]},
                     {"routeDate", date},
                     {"routeSeqNo", routeSeqNo},
-
-                    {"addressId", 0},
+                    {"distance", distance},
+                    {"addressId", addressId},
                     {"addressPostcode", stopPostCode},
                     {"latitude", latitude},
                     {"longitude", longitude},
-                    {"routeAction", routeSeqNo == 0 ? "depot" : "delivery"},
+                    {"routeAction", routeAction},
                     {"itemType", routeSeqNo == 0 ? "depot" : itemArray[RandomNumber(0, itemArray.Length - 1)]},
                     {"status", "pending"},
                     {
@@ -285,48 +337,133 @@ namespace ApiCore
                 };
 
                 InsertRouteStop(newRouteStop);
-                //Console.WriteLine($"Insert {routeSeqNo} {stopPostCode}");
-
                 Console.WriteLine(newRouteStop);
 
-                // find next postcode on the stops List by moving the
-                // geolocation forward by a set amount of km. 
-
-                double kmDistance = 1.5 + (double) RandomNumber(-5, 5) / 10;
-                double deviation = RandomNumber(-5, 5);
-
-                (decimal newLat, decimal newLong) =
-                    FetchNewGeoPosition(kmDistance, directionAngle + deviation, latitude, longitude);
-
-                // now find a nearby postcode
-
-                string sqlText =
-                    $"select postcode from postcodes where (latitude between {latitude - singleKMY} and {latitude + singleKMY}) and (longitude between {longitude - singleKMX} and {longitude + singleKMX}) limit 1";
-                JObject newGeoArea = JObject.Parse(Database.GetSqlSelect(sqlText));
-                JToken result = newGeoArea["result"];
-
-                if (result.HasValues)
-                {
-                    stopPostCode = result[0]["postcode"].ToString();
-                }
-
-                latitude = newLat;
-                longitude = newLong;
+                // set the new stop to be the previously calculated next stop geolocation
+                
+                latitude = newLatitude;
+                longitude = newLongitude;
             }
 
             return true;
         }
 
+        private static (string, decimal, decimal) GetNextPostCode(int directionAngle, decimal latitude,
+            decimal longitude)
+        {
+            // find next postcode on the stops List by moving the
+            // geolocation forward by a set amount of km. 
+
+            double kmDistance = (double) RandomNumber(-400, 400) / 100;
+            double deviation = RandomNumber(-5, 5);
+            string nextPostCode = "";
+
+            (decimal newLat, decimal newLong) =
+                FetchNewGeoPosition(kmDistance, directionAngle + deviation, latitude, longitude);
+
+            // now find a nearby postcode
+
+            string sqlText =
+                $"select postcode from postcodes where (latitude between {latitude - singleKMY} and {latitude + singleKMY}) and (longitude between {longitude - singleKMX} and {longitude + singleKMX}) limit 1";
+            JObject newGeoArea = JObject.Parse(Database.GetSqlSelect(sqlText));
+            JToken result = newGeoArea["result"];
+
+            if (result.HasValues)
+            {
+                nextPostCode = result[0]["postcode"].ToString();
+            }
+
+            return (nextPostCode, newLat, newLong);
+        }
+
         private static string InsertRouteStop(JObject routeStop)
         {
-            JObject postInfo = JObject.Parse(TableName.Post("routes", routeStop.ToObject<Dictionary<string, string>>()));
+            JObject postInfo =
+                JObject.Parse(TableName.Post("routes", routeStop.ToObject<Dictionary<string, string>>()));
+
+            return postInfo["status"].ToString() != "200" ? postInfo.ToString() : postInfo.ToString();
+        }
+
+        private static int InsertNewAddress(string routePostCode, string routeAction, FakeCustomer customer)
+        {
+            string[] notesList =
+            {
+                "Please ring doorbell",
+                "On the front porch",
+                "In the front garden",
+                "Appliance at back gate",
+                "Next to the garages on the left",
+                "behind the car park"
+            };
+
+            string notes = "";
+            if (routeAction == "recycle")
+            {
+                notes = notesList[RandomNumber(0, notesList.Length - 1)];
+            }
+
+            int houseNo = RandomNumber(1, 99);
+
+            if (RandomNumber(1, 3) == 3)
+            {
+                houseNo = RandomNumber(100, 175);
+            }
+
+            JObject newAddress = new JObject
+            {
+                {"postcode", routePostCode},
+                {"customerName", customer.FullName},
+                {"customerEmail", customer.Email},
+                {"locationType", "private property"},
+                {"houseNo", houseNo},
+                {"street", customer.StreetName},
+                {"townAddress", customer.Town},
+                {"notes", notes}
+            };
+
+            Console.WriteLine(newAddress);
+            JObject postInfo =
+                JObject.Parse(TableName.Post("addresses", newAddress.ToObject<Dictionary<string, string>>()));
 
             if (postInfo["status"].ToString() != "200")
             {
-                return postInfo.ToString();
+                Console.WriteLine(postInfo);
+                return 0;
             }
 
-            return postInfo.ToString();
+            try
+            {
+                int addressId = int.Parse(postInfo["result"][0]["insertId"].ToString());
+                return addressId;
+            }
+            catch
+            {
+            }
+
+            return 0;
+        }
+
+        private static List<FakeCustomer> GetFakeCustomers(int noCustomers)
+        {
+            var fakeCustomer = new Faker<FakeCustomer>("en_BORK")
+                .RuleFor(u => u.FirstName, f => f.Name.FirstName())
+                .RuleFor(u => u.LastName, f => f.Name.LastName())
+                .RuleFor(u => u.FullName, (f, u) => u.FirstName + " " + u.LastName)
+                .RuleFor(u => u.Email, (f, u) => f.Internet.Email(u.FirstName, u.LastName))
+                .RuleFor(u => u.StreetName, (f, u) => f.Address.StreetName())
+                .RuleFor(u => u.Town, (f, u) => f.Address.City());
+
+            return fakeCustomer.Generate(noCustomers);
+        }
+
+        private class FakeCustomer
+        {
+            public string FirstName { get; set; }
+            public string LastName { get; set; }
+            public string FullName { get; set; }
+            public string Email { get; set; }
+            public string StreetName { get; set; }
+            public string Town { get; set; }
         }
 
 
