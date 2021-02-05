@@ -26,7 +26,8 @@ values
 ('Oldham', 'OL1 3EG', 5),
 ('Reading', 'RG1 3YL', 13),
 ('Blackburn', 'BB2 1NA', 19),
-('York', 'YO10 3FQ', 9);
+('York', 'YO10 3FQ', 9),
+('Manchester', 'M1 7ED', 15)
 `;
 
 export const createAdminsData = `

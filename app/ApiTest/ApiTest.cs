@@ -25,11 +25,9 @@ namespace ApiTest
                         {"depotId", depotId.ToString()},
                         {"dayNo", dayNo.ToString()}
                     }
-                    
                 };
 
                 Console.WriteLine(Body(request));
-                
             }
 
             return 0;
