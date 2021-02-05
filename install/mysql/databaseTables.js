@@ -8,6 +8,8 @@ create table routes (
     routeSeqNo int not null,                /* delivery or recycle seq no. in route 1,2,3,... */
     addressId int not null,                 /* address Id from table addresses */
     addressPostcode varchar(8) not null,    /* address postcode */
+    latitude  decimal(12,9) not null,       /* latitude associated with the postcode */
+    longitude decimal(12,9) not null,       /* longitude associated with the postcode */
     routeAction varchar(10) not null,       /* deliver or recycle */
     itemType varchar(30) not null,          /* fridge, freezer etc. */
     status varchar(10) not null,            /* pending, completed, failed */
@@ -70,12 +72,11 @@ create table addresses (
     customerName varchar(50) not null,      /* free format customer name */
     customerEmail varchar(100) not null,    /* customer email address */
     locationType varchar(30) not null,      /* "private" or "public" address type */  
-    fullAddress varchar(100) not null,      /* free format address details */
     houseNo varchar(10) not null,           /* house or building number */
     street varchar(50) not null,            /* street name */
     townAddress varchar(50) null,           /* free format address town/city */
     notes varchar(200) null,                /* free format notes field */
-    primary key (addressId)                 
+    primary key (addressId)             
 );
 
 alter table addresses auto_increment=1;
