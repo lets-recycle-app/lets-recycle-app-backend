@@ -31,10 +31,11 @@ namespace ApiCore
             },
             {
                 "routes",
-                "depotId (int), driverId (int), routeDate (date), routeSeqNo, addressId (int), addressPostcode, routeAction, itemType, status, refNo"
+                "depotId (int), driverId (int), routeDate (date), routeSeqNo, addressId (int), addressPostcode, latitude (dec), longitude (dec), routeAction, itemType, status, refNo"
             }
         };
-
+        
+        
         public static string Get(string tableName, IDictionary<string, string> query)
         {
             if (!IsValid(tableName)) return Result(212, "error, service not supported [GET]", null);
@@ -141,7 +142,7 @@ namespace ApiCore
 
                 if (field.FieldType == "date")
                 {
-                    sqlText += $"date_format({field.Name},'%Y-%m-%d') = '{field.FieldValue}'";
+                    sqlText += $"str_to_date('{field.FieldValue}','%Y-%m-%d')";
                 }
                 else
                 {

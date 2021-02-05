@@ -128,5 +128,27 @@ namespace ApiCore
             _mySql?.Close();
             return Main.Result(251, "error, internal sql transaction failed", null);
         }
+
+        public static JToken SqlSingleRow(string sqlText)
+        {
+            string selectData = GetSqlSelect(sqlText);
+
+            if (selectData == null) return "{}";
+
+            JToken sqlRow = JObject.Parse(selectData);
+
+            return sqlRow["result"].HasValues ? sqlRow["result"][0] : "{}";
+        }
+
+        public static JToken SqlMultiRow(string sqlText)
+        {
+            string selectData = GetSqlSelect(sqlText);
+
+            if (selectData == null) return "{}";
+
+            JToken sqlRow = JObject.Parse(selectData);
+
+            return sqlRow["result"].HasValues ? sqlRow["result"] : "{[]}";
+        }
     }
 }
