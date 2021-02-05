@@ -5,6 +5,7 @@ import {
 
 const store = dataStore();
 const db = dbControl();
+const db = dbControl();
 
 const generateRouteSql = (routeList) => {
   let sqlText = '';
