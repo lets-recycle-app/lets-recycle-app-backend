@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using Bogus;
 using Newtonsoft.Json.Linq;
 using static ApiCore.Main;
@@ -103,7 +102,6 @@ namespace ApiCore
                     return Result(240, $"single route failed on depotId={depotId}, driverId={driverRow["driverId"]}",
                         null);
                 }
-                Thread.Sleep(1000);
             }
 
             return Result(232, $"{noRoutesToday} driver routes simulated for day {routeDate}", null);
