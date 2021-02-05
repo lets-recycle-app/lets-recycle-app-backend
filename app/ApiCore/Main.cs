@@ -12,6 +12,7 @@ namespace ApiCore
         public static string Body(APIGatewayProxyRequest request)
         {
             string action = request.Path.Replace("/api/", "").Replace("%20", "");
+            Database.SetUp();
 
             IDictionary<string, string> query = request.QueryStringParameters;
             ApiStatusCode = 210;

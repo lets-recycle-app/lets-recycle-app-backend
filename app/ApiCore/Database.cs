@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.WebSockets;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
 
@@ -6,12 +7,10 @@ namespace ApiCore
 {
     public static class Database
     {
-        private static string _connectString;
-        private static MySqlConnection _mySql;
+        private static string connectString;
 
-        private static bool Connect()
+        public static void SetUp()
         {
-            _mySql = null;
 
             string host = Environment.GetEnvironmentVariable("RDS_HOST");
             string port = Environment.GetEnvironmentVariable("RDS_PORT");
@@ -19,114 +18,103 @@ namespace ApiCore
             string user = Environment.GetEnvironmentVariable("RDS_USER");
             string password = Environment.GetEnvironmentVariable("RDS_PASSWORD");
 
-            _connectString = $"server={host}; port={port}; database={database}; user={user}; password={password}";
+            connectString = $"server={host}; port={port}; database={database}; user={user}; password={password}";
 
-            try
-            {
-                _mySql = new MySqlConnection(_connectString);
-
-                _mySql.Open();
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+            
         }
 
         public static string GetSqlSelect(string sqlText)
         {
-            if (!Connect())
+            using (var _mySql = new MySqlConnection(connectString))
+            using (var sqlCommand = new MySqlCommand(sqlText, _mySql))
             {
-                return Main.Result(501, "failed to connect to the database", null);
-            }
-        
-            MySqlCommand sqlCommand = new MySqlCommand(sqlText, _mySql);
-            MySqlDataReader reader = sqlCommand.ExecuteReader();
+                _mySql.Open();
+                MySqlDataReader reader = sqlCommand.ExecuteReader();
 
-            try
-            {
-                JArray tableData = new JArray();
-
-                while (reader.Read())
+                try
                 {
-                    JObject row = new JObject();
+                    JArray tableData = new JArray();
 
-                    for (int i = 0; i < reader.FieldCount; i++)
+                    while (reader.Read())
                     {
-                        if (reader.GetFieldType(i) == typeof(int))
-                        {
-                            int value = reader[i] as int? ?? default;
-                            row.Add(reader.GetName(i), value);
-                        }
-                        else if (reader.GetFieldType(i) == typeof(decimal))
-                        {
-                            decimal value = reader[i] as decimal? ?? default;
-                            row.Add(reader.GetName(i), value);
-                        }
-                        else
-                        {
-                            string value = reader[i] as string;
-                            row.Add(reader.GetName(i), value);
-                        }
-                    }
+                        JObject row = new JObject();
 
-                    tableData.Add(row);
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            if (reader.GetFieldType(i) == typeof(int))
+                            {
+                                int value = reader[i] as int? ?? default;
+                                row.Add(reader.GetName(i), value);
+                            }
+                            else if (reader.GetFieldType(i) == typeof(decimal))
+                            {
+                                decimal value = reader[i] as decimal? ?? default;
+                                row.Add(reader.GetName(i), value);
+                            }
+                            else
+                            {
+                                string value = reader[i] as string;
+                                row.Add(reader.GetName(i), value);
+                            }
+                        }
+
+                        tableData.Add(row);
+                    }
+                    return Main.Result(tableData.Count > 0 ? 200 : 201, "OK", tableData);
+                }
+                catch
+                {
+                    // ignored
                 }
 
-                return Main.Result(tableData.Count > 0 ? 200 : 201, "OK", tableData);
+                _mySql.Close();
             }
-            catch
-            {
-                // ignored
-            }
-
-            _mySql?.Close();
 
             return Main.Result(502, "error, internal sql failed", null);
         }
 
         public static string SqlTransaction(string sqlText)
         {
-            if (!Connect())
+            using (var _mySql = new MySqlConnection(connectString)) 
+            using (var sqlCommand = new MySqlCommand(sqlText, _mySql))
             {
-                return Main.Result(501, "failed to connect to the database", null);
-            }
+                _mySql.Open();
 
-            Console.WriteLine(sqlText);
-            MySqlTransaction sqlTransaction = _mySql.BeginTransaction();
-            MySqlCommand sqlCommand = new MySqlCommand(sqlText, _mySql);
-            JArray txArray = new JArray {new JObject {{"insertId", -1}}};
+                MySqlTransaction sqlTransaction = _mySql.BeginTransaction();
+                JArray txArray = new JArray {new JObject {{"insertId", -1}}};
 
-            try
-            {
-                sqlCommand.ExecuteNonQuery();
-                sqlTransaction.Commit();
-
-                MySqlCommand sqlCommandId = new MySqlCommand("select last_insert_id()", _mySql);
-                MySqlDataReader reader = sqlCommandId.ExecuteReader();
-
-                reader.Read();
-
-                txArray[0]["insertId"] = reader.GetInt32(0);
-
-                reader.Close();
-
-                return Main.Result(200, "OK", txArray);
-            }
-            catch
-            {
                 try
                 {
-                    sqlTransaction.Rollback();
+                    sqlCommand.ExecuteNonQuery();
+                    sqlTransaction.Commit();
+
+                    
+                    MySqlCommand sqlCommandId = new MySqlCommand("select last_insert_id()", _mySql);
+                    MySqlDataReader reader = sqlCommandId.ExecuteReader();
+
+                    reader.Read();
+
+                    txArray[0]["insertId"] = reader.GetInt32(0);
+
+                    reader.Close();
+
+                    return Main.Result(200, "OK", txArray);
                 }
                 catch
                 {
-                    return Main.Result(250, "error, internal sql rollback failed", null);
+                    try
+                    {
+                        sqlTransaction.Rollback();
+                    }
+                    catch
+                    {
+                        return Main.Result(250, "error, internal sql rollback failed", null);
+                    }
                 }
+
+                _mySql.Close();
             }
 
-            _mySql?.Close();
             return Main.Result(251, "error, internal sql transaction failed", null);
         }
 
