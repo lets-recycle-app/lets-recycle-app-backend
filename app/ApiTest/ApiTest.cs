@@ -9,15 +9,21 @@ namespace ApiTest
     {
         private static int Main()
         {
-            for (int depotId = 1; depotId <= 20; depotId += 1)
+            RunMap();
+            //GenerateRoutes();
+
+            return 0;
+        }
+
+        static void GenerateRoutes()
+        {
+            for (int depotId = 1; depotId <= 1; depotId += 1)
             for (int dayNo = 1; dayNo <= 5; dayNo += 1)
             {
                 var request = new APIGatewayProxyRequest
                 {
-                    Body =
-                        "{\"locationType\": \"private property\",\"customerName\": \"Danny Jones\",\"customerEmail\": \"aaa@aa.aa\",\"itemType\": \"washer\",\"houseNo\": \"12\",\"street\": \"Some St\", \"townAddress\": \"Sometown\", \"postcode\": \"AL5 3EJ\",\"notes\": \"lorem ipsum dolor sit amet\"}",
+                    Body = "",
                     Path = "/api/route-simulate",
-                    //Path = "/api/route-distance",
                     HttpMethod = "GET",
 
                     QueryStringParameters = new Dictionary<string, string>
@@ -29,8 +35,27 @@ namespace ApiTest
 
                 Console.WriteLine(Body(request));
             }
+        }
 
-            return 0;
+        static void RunMap()
+        {
+            var request = new APIGatewayProxyRequest
+            {
+                Body =
+                    "{\"locationType\": \"private property\",\"customerName\": \"Danny Jones\",\"customerEmail\": \"danny123@gmail.com.aa\",\"itemType\": \"washer\",\"houseNo\": \"8\",\"street\": \"Station Road\", \"townAddress\": \"Stockport\", \"postcode\": \"SK4 1NU\",\"notes\": \" \"}",
+                Path = "/api/route-map",
+                HttpMethod = "GET",
+
+                QueryStringParameters = new Dictionary<string, string>
+                {
+                    {"depotId", "4"},
+                    {"driverId", "0"},
+                    {"dayNo", "0"}
+                }
+            };
+
+
+            Console.WriteLine(Body(request));
         }
     }
 }
