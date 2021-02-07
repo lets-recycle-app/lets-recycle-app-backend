@@ -111,7 +111,7 @@ namespace ApiCore
             }
 
             return Result(200,
-                $"route map completed for depotId = {depotIdSel}, driverId={driverIdSel}, routeDate={routeDateSel}, driverId={driverIdSel}",
+                $"route map completed for depotId={depotIdSel} & routeDate={routeDateSel} & driverId={driverIdSel}",
                 mapData);
         }
 
