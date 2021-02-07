@@ -46,7 +46,7 @@ namespace ApiCore
                             }
                             else
                             {
-                                return Result(232, "no route found, dayNo is in the past", null);
+                                return Result(232, "no route found, dayNo is in the past or more than 20 days ahead", null);
                             }
 
                             break;
