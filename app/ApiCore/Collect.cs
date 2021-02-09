@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 using static ApiCore.Main;
+using static ApiCore.Route;
 
 namespace ApiCore
 {
@@ -9,13 +11,125 @@ namespace ApiCore
     {
         private static readonly Random Random = new Random();
 
-        public static string Request()
+        public static string Request(IDictionary<string, string> query)
         {
-            JArray dates = GetCollectionDates();
+            JArray collectDatesList = new JArray();
+            string postcode = "";
 
-            return dates.Count == 0
-                ? Result(200, "no collection dates available", dates)
-                : Result(200, $"{dates.Count} collection dates available", dates);
+            // look for collection postcode in querystring
+            foreach (var pair in query)
+            {
+                // postcode should be the only key for this request
+                if (pair.Key == "postcode")
+                {
+                    postcode = pair.Value;
+                    break;
+                }
+            }
+
+            if (postcode.Length == 0)
+            {
+                return Result(200, "no collection dates, missing postcode", null);
+            }
+
+            // customer postcode received, so look up
+            // nearest depot to customer address
+            
+            JToken geoLocation = Database.SqlSingleRow($"select latitude, longitude from postcodes where postcode = '{postcode}' limit 1");
+
+            decimal custLat = 0;
+            decimal custLong = 0;
+
+            if (geoLocation.HasValues)
+            {
+                custLat = decimal.Parse(geoLocation["latitude"].ToString());
+                custLong = decimal.Parse(geoLocation["longitude"]?.ToString());
+            }
+            else
+            {
+                return Result(200, "no collection dates, invalid customer postcode", null);
+            }
+
+            JToken depotGeoSelect =
+                Database.SqlMultiRow(
+                    "select d.depotId, p.latitude, p.longitude from depots d, postcodes p where d.postcode = p.postcode");
+            
+            int closestDepotId = 0;
+            decimal closestDistance = -1;
+
+            foreach (var depotRow in depotGeoSelect)
+            {
+                var depotId = int.Parse(depotRow["depotId"].ToString());
+                var depotLat = decimal.Parse(depotRow["latitude"].ToString());
+                var depotLong = decimal.Parse(depotRow["longitude"]?.ToString());
+
+                decimal distanceToDepot = HaversineDistance(custLat, custLong, depotLat, depotLong);
+
+                if (closestDistance < 0)
+                {
+                    closestDistance = distanceToDepot;
+                    closestDepotId = depotId;
+                }
+                else if (distanceToDepot < closestDistance)
+                {
+                    closestDistance = distanceToDepot;
+                    closestDepotId = depotId;
+                }
+            }
+
+            // find all dates that this depot has routes for
+            JToken depotDates =
+                Database.SqlMultiRow(
+                    $"select distinct(date_format(routeDate,'%Y-%m-%d')) as routeDate from routes where depotId = {closestDepotId}");
+
+            if (depotDates.Any())
+            {
+                // find the last stop postcode for each date/driver for this depot  
+                foreach (var dateRow in depotDates)
+                {
+                    JToken maxStops =
+                        Database.SqlMultiRow(
+                            $"select max(routeSeqNo) as routeSeqNo, date_format(routeDate,'%Y-%m-%d') as routeDate, driverId from routes where depotId = {closestDepotId} and date_format(routeDate,'%Y-%m-%d') = '{dateRow["routeDate"]}' group by routeDate, driverId order by routeDate, driverId");
+
+                    if (maxStops.HasValues)
+                    {
+                        
+                        foreach (var maxStopRow in maxStops)
+                        {
+                            string routeDate = maxStopRow["routeDate"].ToString();
+                            int lastStopNo = int.Parse(maxStopRow["routeSeqNo"].ToString());
+                            int driverId = int.Parse(maxStopRow["driverId"].ToString());
+
+                            JToken stopRow = Database.SqlSingleRow($"select latitude, longitude from routes where routeSeqNo = {lastStopNo} and date_format(routeDate,'%Y-%m-%d') = '{routeDate}' and driverId = {driverId} limit 1");
+
+                            decimal stopLat = 0;
+                            decimal stopLong = 0;
+
+                            if (stopRow.HasValues)
+                            {
+                                stopLat = decimal.Parse(stopRow["latitude"].ToString());
+                                stopLong = decimal.Parse(stopRow["longitude"]?.ToString());
+                            }
+
+                            decimal stopDistanceToCustomer = HaversineDistance(custLat, custLong, stopLat, stopLong);
+
+                            if (stopDistanceToCustomer <= 10)
+                            {
+                                // these current final stops are within 10 km of the
+                                // customer on this date, so supply the date to the customer
+                                
+                                collectDatesList.Add(routeDate);
+                            }
+                        }
+                    }
+                }
+            }
+
+            JArray finalDates= new JArray(collectDatesList.Distinct());
+            
+            return finalDates.Count == 0
+                ? Result(200, "no collection dates available", finalDates)
+                : Result(200, $"{finalDates.Count} collection dates available", finalDates);
         }
 
         public static string Confirm(string body)
@@ -43,13 +157,14 @@ namespace ApiCore
                 return Result(217, "collect-confirm internal error", null);
             }
 
-            JObject postInfo = JObject.Parse(TableName.Post("addresses", newAddress.ToObject<Dictionary<string, string>>()));
-            
+            JObject postInfo =
+                JObject.Parse(TableName.Post("addresses", newAddress.ToObject<Dictionary<string, string>>()));
+
             if (postInfo["status"].ToString() != "200")
             {
                 return postInfo.ToString();
             }
-            
+
             try
             {
                 int addressId = int.Parse(postInfo["result"][0]["insertId"].ToString());

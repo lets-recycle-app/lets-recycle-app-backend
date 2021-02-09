@@ -29,7 +29,7 @@ namespace ApiCore
         {
             return action switch
             {
-                "collect-request" => Collect.Request(),
+                "collect-request" => Collect.Request(query),
                 "route-map" => Route.Map(query),
                 "route-marker" => Route.Markers(query),
                 "route-simulate" => Route.Simulate(query),

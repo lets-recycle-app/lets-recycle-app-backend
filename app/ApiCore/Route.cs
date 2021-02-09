@@ -182,7 +182,7 @@ namespace ApiCore
                 JToken driverId = driverRow["driverId"];
 
                 string sqlRoute =
-                    $"select routeAction, latitude, longitude, addressPostcode from routes where depotId = {depotIdSel} and driverId = {driverId} and routeDate = str_to_date('{routeDateSel}','%Y-%m-%d') order by routeSeqNo";
+                    $"select routeAction, refNo, latitude, longitude, addressPostcode from routes where depotId = {depotIdSel} and driverId = {driverId} and routeDate = str_to_date('{routeDateSel}','%Y-%m-%d') order by routeSeqNo";
 
                 JToken routeRow = Database.SqlMultiRow(sqlRoute);
 
@@ -193,9 +193,14 @@ namespace ApiCore
                 {
                     JObject toolTip = new JObject
                     {
-                        {"text", stop["addressPostcode"]}
+                        {"text", $"Postcode:{stop["addressPostcode"]} Ref:{stop["refNo"]}"}
                     };
-                    
+
+                    if (stop["routeAction"].ToString() == "depot")
+                    {
+                        toolTip["text"] = $"Postcode:{stop["addressPostcode"]} Ref:Depot";
+                    }
+
                     mapData.Add(new JObject
                     {
                         {"routeAction", stop["routeAction"]},
@@ -281,7 +286,6 @@ namespace ApiCore
                     return Result(232, $"no route simulated, depot postcode {depotPostCode} is not valid", null);
                 }
             }
-
             else
             {
                 return Result(232, "no route simulated, depotId is not valid", null);
@@ -411,7 +415,7 @@ namespace ApiCore
         }
 
 
-        private static decimal HaversineDistance(decimal lat1, decimal lon1, decimal lat2, decimal lon2)
+        public static decimal HaversineDistance(decimal lat1, decimal lon1, decimal lat2, decimal lon2)
         {
             const double radiusKm = 6378.137;
             double latitudeDelta = ToRadians((double) (lat2 - lat1));
@@ -527,7 +531,7 @@ namespace ApiCore
             // find next postcode on the stops List by moving the
             // geolocation forward by a set amount of km.
 
-            double kmDistance = 1.5 + (double) RandomNumber(-100, 100) / 100;
+            double kmDistance = 2.5 + (double) RandomNumber(-150, 150) / 100;
             double deviation = RandomNumber(-5, 5);
             string nextPostCode = "";
             (decimal newLat, decimal newLong) =
