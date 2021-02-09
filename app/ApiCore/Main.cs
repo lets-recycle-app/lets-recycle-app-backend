@@ -31,6 +31,7 @@ namespace ApiCore
             {
                 "collect-request" => Collect.Request(),
                 "route-map" => Route.Map(query),
+                "route-marker" => Route.Markers(query),
                 "route-simulate" => Route.Simulate(query),
                 "route-distance" => Route.Distance(query),
                 _ => TableName.Get(action, query)

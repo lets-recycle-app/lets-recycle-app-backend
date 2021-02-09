@@ -43,14 +43,14 @@ namespace ApiTest
             {
                 Body =
                     "{\"locationType\": \"private property\",\"customerName\": \"Danny Jones\",\"customerEmail\": \"danny123@gmail.com.aa\",\"itemType\": \"washer\",\"houseNo\": \"8\",\"street\": \"Station Road\", \"townAddress\": \"Stockport\", \"postcode\": \"SK4 1NU\",\"notes\": \" \"}",
-                Path = "/api/route-map",
+                Path = "/api/route-marker",
                 HttpMethod = "GET",
 
                 QueryStringParameters = new Dictionary<string, string>
                 {
-                    {"depotId", "4"},
-                    {"driverId", "0"},
-                    {"dayNo", "0"}
+                    {"depotId", "3"},
+                    {"driverId", "47"},
+                    {"dayNo", "1"}
                 }
             };
 

@@ -20,11 +20,6 @@ namespace ApiCore
             int dayNoSel = -1;
             string routeDateSel = "";
 
-            //routeDateSel = "2021-02-07";
-            //depotIdSel = 2;
-            //driverIdSel = 0;
-
-
             if (query.Count > 0)
             {
                 foreach (var (key, value) in query)
@@ -46,7 +41,8 @@ namespace ApiCore
                             }
                             else
                             {
-                                return Result(232, "no route found, dayNo is in the past or more than 20 days ahead", null);
+                                return Result(232, "no route found, dayNo is in the past or more than 20 days ahead",
+                                    null);
                             }
 
                             break;
@@ -112,6 +108,107 @@ namespace ApiCore
 
             return Result(200,
                 $"route map completed for depotId={depotIdSel} & routeDate={routeDateSel} & driverId={driverIdSel}",
+                mapData);
+        }
+
+        public static string Markers(IDictionary<string, string> query)
+        {
+            int driverIdSel = -1;
+            int depotIdSel = -1;
+            int dayNoSel = -1;
+            string routeDateSel = "";
+
+            if (query.Count > 0)
+            {
+                foreach (var (key, value) in query)
+                {
+                    switch (key.Trim())
+                    {
+                        case "depotId":
+                            depotIdSel = int.Parse(value);
+                            break;
+                        case "driverId":
+                            driverIdSel = int.Parse(value);
+                            break;
+                        case "dayNo":
+                        {
+                            dayNoSel = int.Parse(value);
+                            if (dayNoSel >= 0 && dayNoSel <= 20)
+                            {
+                                routeDateSel = GetFutureDate(dayNoSel);
+                            }
+                            else
+                            {
+                                return Result(232, "no route found, dayNo is in the past or more than 20 days ahead",
+                                    null);
+                            }
+
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (depotIdSel < 0 || driverIdSel < 0 || dayNoSel < 0)
+            {
+                return Result(200,
+                    $"incorrect usage, route-map?depotId={depotIdSel} & driverId = {driverIdSel} & dayNo = {dayNoSel}",
+                    null);
+            }
+
+
+            // results are always filtered by depot and and date,
+            // all drivers (driverId=0) or specific driver can also be specified
+
+
+            string sqlText;
+
+            if (driverIdSel == 0)
+            {
+                sqlText = $"select * from drivers where depotId = {depotIdSel}";
+            }
+            else
+            {
+                sqlText = $"select * from drivers where depotId = {depotIdSel} and driverId = {driverIdSel}";
+            }
+
+
+            JToken allDrivers = Database.SqlMultiRow(sqlText);
+            JArray mapData = new JArray();
+
+
+            foreach (var driverRow in allDrivers)
+            {
+                JToken driverId = driverRow["driverId"];
+
+                string sqlRoute =
+                    $"select routeAction, latitude, longitude, addressPostcode from routes where depotId = {depotIdSel} and driverId = {driverId} and routeDate = str_to_date('{routeDateSel}','%Y-%m-%d') order by routeSeqNo";
+
+                JToken routeRow = Database.SqlMultiRow(sqlRoute);
+
+
+                // generate a marker object for every stop
+
+                foreach (var stop in routeRow)
+                {
+                    JObject toolTip = new JObject
+                    {
+                        {"text", stop["addressPostcode"]}
+                    };
+                    
+                    mapData.Add(new JObject
+                    {
+                        {"routeAction", stop["routeAction"]},
+                        {"location", new JArray {stop["latitude"] ?? 0.00, stop["longitude"] ?? 0.00}},
+                        {"tooltip", toolTip}
+                    });
+                }
+
+                ;
+            }
+
+            return Result(200,
+                $"route markers completed for depotId={depotIdSel} & routeDate={routeDateSel} & driverId={driverIdSel}",
                 mapData);
         }
 
